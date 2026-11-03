@@ -33,3 +33,6 @@ Read these before modifying architecture, APIs, or UI:
 - `npx tsc --noEmit` (client + server)
 - `npm test` (`node --test` unit + BFF/provider integration suite)
 - `HOME=/tmp EXPO_NO_TELEMETRY=1 npx expo export --platform ios --output-dir /tmp/gowild-ios-check` (and `--platform android`)
+
+
+
