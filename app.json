@@ -8,18 +8,17 @@
     "scheme": "gowild",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.gowild.app",
+      "supportsTablet": true
     },
     "android": {
+      "package": "com.gowild.app",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
       },
       "predictiveBackGestureEnabled": false
     },
-    
     "web": {
       "output": "server",
       "favicon": "./assets/images/favicon.png"
@@ -29,9 +28,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#171725",
-          "image": "./assets/brand/gowild-mark.png",
-          "imageWidth": 96
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/brand/gowild-splash-light.png",
+          "imageWidth": 220
         }
       ]
     ],

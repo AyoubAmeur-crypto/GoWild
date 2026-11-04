@@ -76,8 +76,14 @@ export function resolveGatewayCandidates(customGatewayUrl?: string): string[] {
     }
   }
 
-  pushUnique("http://localhost:8081");
-  pushUnique("http://localhost:4010");
+  // Skip local emulator loopback probes inside standalone release APKs/IPAs
+  // when no cloud gateway URL is configured, so embedded failover is instant (<5ms).
+  const isStandaloneReleaseNative =
+    typeof __DEV__ === "boolean" && !__DEV__ && !hostUri;
+  if (!isStandaloneReleaseNative) {
+    pushUnique("http://localhost:8081");
+    pushUnique("http://localhost:4010");
+  }
 
   return candidates;
 }
