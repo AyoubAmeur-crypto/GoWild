@@ -2,19 +2,20 @@ import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, Star } from "lucide-react-native";
+import { Star } from "lucide-react-native";
 import type { PropertyType } from "../../../types/domain";
 import type { SearchFilterState } from "../../../stores/useSearchStore";
 import { useAppTheme } from "../../../theme/useAppTheme";
 import { GlassSwitch } from "../../../components/ui/GlassSwitch";
 import { PrimaryButton } from "../../../components/ui/PrimaryButton";
 import { AmenityChip } from "../../../components/ui/AmenityChip";
+import { AppBottomSheet } from "../../../components/ui/AppBottomSheet";
+import { HapticPressable } from "../../../components/ui/HapticPressable";
+import { haptics } from "../../../lib/haptics";
 
 interface FilterSheetProps {
   visible: boolean;
@@ -54,7 +55,6 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
   onApply,
 }) => {
   const { palette } = useAppTheme();
-  const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState<SearchFilterState>(initialFilters);
 
   useEffect(() => {
@@ -88,6 +88,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
   };
 
   const resetAll = () => {
+    haptics.selection();
     setDraft({
       propertyTypes: [],
       amenities: [],
@@ -96,62 +97,43 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
     });
   };
 
+  const handleApply = () => {
+    haptics.success();
+    onApply(draft);
+    onClose();
+  };
+
   return (
-    <Modal
+    <AppBottomSheet
       visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
-    >
-      <View style={styles.backdrop}>
-        <View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: palette.background,
-              paddingBottom: Math.max(insets.bottom + 14, 24),
-            },
-          ]}
+      title="Filter Stays"
+      onClose={onClose}
+      headerRight={
+        <HapticPressable
+          onPress={resetAll}
+          haptic="selection"
+          accessibilityRole="button"
+          accessibilityLabel="Reset filters"
+          style={styles.resetBtn}
         >
-          <View style={styles.handleBar} />
-
-          <View
-            style={[
-              styles.header,
-              { borderBottomColor: palette.border },
-            ]}
-          >
-            <Pressable
-              onPress={resetAll}
-              accessibilityRole="button"
-              accessibilityLabel="Reset filters"
-            >
-              <Text style={[styles.resetText, { color: palette.primary }]}>
-                Reset
-              </Text>
-            </Pressable>
-            <Text style={[styles.headerTitle, { color: palette.text }]}>
-              Filter Stays
-            </Text>
-            <Pressable
-              onPress={onClose}
-              style={[
-                styles.closeIcon,
-                { backgroundColor: palette.surfaceMuted },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Close filter modal"
-            >
-              <X size={18} color={palette.text} />
-            </Pressable>
-          </View>
-
-          <ScrollView
-            contentContainerStyle={styles.scrollContent}
-            showsVerticalScrollIndicator={false}
-          >
-            {/* Property Type */}
-            <View style={styles.section}>
+          <Text style={[styles.resetText, { color: palette.primary }]}>
+            Reset
+          </Text>
+        </HapticPressable>
+      }
+      footer={
+        <PrimaryButton
+          label="Apply Filters"
+          onPress={handleApply}
+        />
+      }
+    >
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Property Type */}
+        <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: palette.text }]}>
                 Property Type
               </Text>
@@ -300,7 +282,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
                   <Text
                     style={[styles.toggleSubtitle, { color: palette.subtext }]}
                   >
-                    Only show stays with refundable rate plans
+                    Refundable rate plans
                   </Text>
                 </View>
                 <GlassSwitch
@@ -324,7 +306,7 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
                   <Text
                     style={[styles.toggleSubtitle, { color: palette.subtext }]}
                   >
-                    Immediate booking confirmation from supplier
+                    Instant reservation voucher
                   </Text>
                 </View>
                 <GlassSwitch
@@ -355,63 +337,18 @@ export const FilterSheet: React.FC<FilterSheetProps> = ({
               </View>
             </View>
           </ScrollView>
-
-          <View style={styles.footer}>
-            <PrimaryButton
-              label="Apply Filters"
-              onPress={() => {
-                onApply(draft);
-                onClose();
-              }}
-            />
-          </View>
-        </View>
-      </View>
-    </Modal>
+    </AppBottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(23, 23, 37, 0.52)",
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    maxHeight: "88%",
-  },
-  handleBar: {
-    width: 42,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#CBD5E1",
-    alignSelf: "center",
-    marginTop: 10,
-  },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderBottomWidth: 1,
+  resetBtn: {
+    paddingVertical: 4,
+    paddingHorizontal: 8,
   },
   resetText: {
     fontSize: 14,
     fontWeight: "600",
-  },
-  headerTitle: {
-    fontSize: 17,
-    fontWeight: "700",
-  },
-  closeIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
   },
   scrollContent: {
     padding: 20,

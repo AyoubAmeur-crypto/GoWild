@@ -1,4 +1,5 @@
-import React from "react";
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -12,7 +13,7 @@ import {
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useForm, Controller } from "react-hook-form";
-import { ArrowLeft } from "lucide-react-native";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react-native";
 import {
   AuthRegisterSchema,
   type AuthRegisterInput,
@@ -29,6 +30,7 @@ export const SignUpScreen: React.FC = () => {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { palette } = useAppTheme();
+  const [showPassword, setShowPassword] = useState(false);
   const currency = useSettingsStore((s) => s.currency);
   const language = useSettingsStore((s) => s.language);
 
@@ -99,10 +101,11 @@ export const SignUpScreen: React.FC = () => {
             Create Traveler Account
           </Text>
           <Text style={[styles.subtitle, { color: palette.subtext }]}>
-            Save your guest profile for faster checkouts and sync hotel bookings
-            across devices.
+            Join goWild for instant bookings and synced trips.
           </Text>
         </View>
+
+        <GoogleSignInButton />
 
         <View
           style={[
@@ -115,28 +118,28 @@ export const SignUpScreen: React.FC = () => {
               {
                 name: "firstName",
                 label: "First Name",
-                placeholder: "Elena",
+                placeholder: "e.g. Elena",
                 keyboardType: "default",
                 secure: false,
               },
               {
                 name: "lastName",
                 label: "Last Name",
-                placeholder: "Rostova",
+                placeholder: "e.g. Rostova",
                 keyboardType: "default",
                 secure: false,
               },
               {
                 name: "email",
                 label: "Email Address",
-                placeholder: "traveler@example.com",
+                placeholder: "e.g. traveler@example.com",
                 keyboardType: "email-address",
                 secure: false,
               },
               {
                 name: "phone",
                 label: "Phone Number",
-                placeholder: "+1 415 555 0140",
+                placeholder: "e.g. +1 415 555 0140",
                 keyboardType: "phone-pad",
                 secure: false,
               },
@@ -153,35 +156,52 @@ export const SignUpScreen: React.FC = () => {
               <Text style={[styles.label, { color: palette.subtext }]}>
                 {f.label}
               </Text>
-              <Controller
-                control={control}
-                name={f.name}
-                render={({ field: { value, onChange } }) => (
-                  <TextInput
-                    value={value}
-                    onChangeText={onChange}
-                    placeholder={f.placeholder}
-                    placeholderTextColor={palette.muted}
-                    keyboardType={f.keyboardType}
-                    secureTextEntry={f.secure}
-                    autoCapitalize={
-                      f.name === "email" || f.name === "password"
-                        ? "none"
-                        : "words"
-                    }
-                    style={[
-                      styles.input,
-                      {
-                        backgroundColor: palette.surfaceMuted,
-                        borderColor: errors[f.name]
-                          ? palette.danger
-                          : palette.border,
-                        color: palette.text,
-                      },
-                    ]}
-                  />
-                )}
-              />
+              <View style={f.secure ? styles.pwRow : undefined}>
+                <Controller
+                  control={control}
+                  name={f.name}
+                  render={({ field: { value, onChange } }) => (
+                    <TextInput
+                      value={value}
+                      onChangeText={onChange}
+                      placeholder={f.placeholder}
+                      placeholderTextColor={palette.muted}
+                      keyboardType={f.keyboardType}
+                      secureTextEntry={f.secure ? !showPassword : false}
+                      autoCapitalize={
+                        f.name === "email" || f.name === "password"
+                          ? "none"
+                          : "words"
+                      }
+                      style={[
+                        styles.input,
+                        f.secure ? styles.pwInput : null,
+                        {
+                          backgroundColor: palette.surfaceMuted,
+                          borderColor: errors[f.name]
+                            ? palette.danger
+                            : palette.border,
+                          color: palette.text,
+                        },
+                      ]}
+                    />
+                  )}
+                />
+                {f.secure ? (
+                  <Pressable
+                    onPress={() => setShowPassword((v) => !v)}
+                    style={styles.eyeBtn}
+                    accessibilityRole="button"
+                    accessibilityLabel="Toggle password visibility"
+                  >
+                    {showPassword ? (
+                      <EyeOff size={18} color={palette.subtext} />
+                    ) : (
+                      <Eye size={18} color={palette.subtext} />
+                    )}
+                  </Pressable>
+                ) : null}
+              </View>
               {errors[f.name] ? (
                 <Text style={[styles.err, { color: palette.danger }]}>
                   {errors[f.name]?.message}
@@ -265,6 +285,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 14,
     fontSize: 14,
+  },
+  pwRow: {
+    position: "relative",
+    justifyContent: "center",
+  },
+  pwInput: {
+    paddingRight: 44,
+  },
+  eyeBtn: {
+    position: "absolute",
+    right: 14,
   },
   err: {
     fontSize: 11,

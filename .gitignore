@@ -47,3 +47,21 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase credentials / local emulator state
+*service-account*.json
+*firebase-adminsdk*.json
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# Python managed functions
+functions/venv/
+functions/.venv/
+__pycache__/
+*.pyc
+functions/.env*
+!functions/.env.example
+functions/.secret.local
+functions/.secret.*

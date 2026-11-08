@@ -83,3 +83,22 @@ export function useLogoutAction() {
   };
 }
 
+
+export function useGoogleLoginMutation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async () => {
+      const { getGoogleCredential } = await import("../../../services/auth/googleSignIn");
+      const config = await goWildApi.getAuthConfig();
+      return goWildApi.googleLogin(await getGoogleCredential(config));
+    },
+    onSuccess: async ({ token, user }) => {
+      useAuthStore.getState().setSession(token, user);
+      useSettingsStore.getState().setCurrency(user.preferredCurrency);
+      useSettingsStore.getState().setLanguage(user.preferredLanguage);
+      try { useFavoritesStore.getState().setFavoriteIds((await goWildApi.getFavorites()).hotelIds); } catch { /* Retry on next refresh. */ }
+      await qc.invalidateQueries({ queryKey: ["bookings"] });
+      await qc.invalidateQueries({ queryKey: ["notifications"] });
+    },
+  });
+}

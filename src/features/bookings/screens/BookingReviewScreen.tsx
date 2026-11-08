@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   ShieldCheck,
   Lock,
+  CreditCard,
   CheckSquare,
   Square,
   AlertTriangle,
@@ -38,6 +39,7 @@ import { useHotelDetail } from "../../hotels/hooks/useHotels";
 import { useRevalidateOffer } from "../../availability/hooks/useRoomOffers";
 import { PriceBreakdownCard } from "../../availability/components/PriceBreakdownCard";
 import { useCreateBooking } from "../hooks/useBookings";
+import { VisaLogo, MastercardLogo } from "../../../components/ui/PaymentLogos";
 
 const CheckoutFormSchema = z.object({
   firstName: z.string().trim().min(2, "First name is required"),
@@ -81,6 +83,10 @@ export const BookingReviewScreen: React.FC<BookingReviewScreenProps> = ({
   const user = useAuthStore((s) => s.user);
 
   const [revalidated, setRevalidated] = useState<RevalidatedOffer | null>(null);
+  const [cardNumber, setCardNumber] = useState("4242 4242 4242 4242");
+  const [cardExpiry, setCardExpiry] = useState("12/28");
+  const [cardCvc, setCardCvc] = useState("123");
+  const [cardName, setCardName] = useState(() => `${user?.firstName ?? "Ayoub"} ${user?.lastName ?? "Ameur"}`.trim());
   const [idempotencyKey, setIdempotencyKey] = useState<string>(() =>
     generateIdempotencyKey()
   );
@@ -154,12 +160,7 @@ export const BookingReviewScreen: React.FC<BookingReviewScreenProps> = ({
         },
       },
       {
-        onSuccess: async ({ booking }) => {
-          if (booking.isExternalHandoff && booking.externalCheckoutUrl) {
-            await WebBrowser.openBrowserAsync(
-              booking.externalCheckoutUrl
-            ).catch(() => {});
-          }
+        onSuccess: ({ booking }) => {
           router.replace(`/booking/confirmation/${booking.id}`);
         },
       }
@@ -227,7 +228,7 @@ export const BookingReviewScreen: React.FC<BookingReviewScreenProps> = ({
         ) : revalidateMutation.error ? (
           <ErrorState
             error={revalidateMutation.error}
-            retryLabel="Return to Room Selection"
+            retryLabel="Return to Hotel"
             onRetry={() => router.back()}
           />
         ) : revalidated ? (
@@ -441,6 +442,155 @@ export const BookingReviewScreen: React.FC<BookingReviewScreenProps> = ({
               providerLabel={revalidated.capabilities.displayName}
             />
 
+            {/* Payment & Card Checkout Card */}
+            <View
+              style={[
+                styles.formCard,
+                {
+                  backgroundColor: palette.surface,
+                  borderColor: palette.border,
+                },
+              ]}
+            >
+              <View style={styles.formCardHeader}>
+                <CreditCard size={18} color={palette.primary} />
+                <Text style={[styles.cardTitle, { color: palette.text }]}>
+                  Payment Method
+                </Text>
+              </View>
+
+              <View style={styles.paymentMethodRow}>
+                <View
+                  style={[
+                    styles.paymentMethodBtn,
+                    {
+                      backgroundColor: palette.surfaceMuted,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                >
+                  <CreditCard size={16} color={palette.primary} />
+                  <Text
+                    style={[styles.paymentMethodText, { color: palette.text }]}
+                  >
+                    Credit / Debit Card
+                  </Text>
+                  <View style={styles.cardLogosWrap}>
+                    <VisaLogo width={36} height={22} />
+                    <MastercardLogo width={36} height={22} />
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.fieldLabel, { color: palette.subtext }]}>
+                  Name on Card
+                </Text>
+                <TextInput
+                  value={cardName}
+                  onChangeText={setCardName}
+                  placeholder="Cardholder Name"
+                  placeholderTextColor={palette.muted}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: palette.surfaceMuted,
+                      borderColor: palette.border,
+                      color: palette.text,
+                    },
+                  ]}
+                />
+              </View>
+
+              <View style={styles.fieldWrap}>
+                <Text style={[styles.fieldLabel, { color: palette.subtext }]}>
+                  Card Number
+                </Text>
+                <TextInput
+                  value={cardNumber}
+                  onChangeText={setCardNumber}
+                  placeholder="4242 •••• •••• 4242"
+                  placeholderTextColor={palette.muted}
+                  keyboardType="numeric"
+                  maxLength={19}
+                  style={[
+                    styles.input,
+                    {
+                      backgroundColor: palette.surfaceMuted,
+                      borderColor: palette.border,
+                      color: palette.text,
+                    },
+                  ]}
+                />
+              </View>
+
+              <View style={styles.splitRow}>
+                <View style={[styles.fieldWrap, { flex: 1 }]}>
+                  <Text style={[styles.fieldLabel, { color: palette.subtext }]}>
+                    Expiry Date
+                  </Text>
+                  <TextInput
+                    value={cardExpiry}
+                    onChangeText={setCardExpiry}
+                    placeholder="MM/YY"
+                    placeholderTextColor={palette.muted}
+                    keyboardType="numeric"
+                    maxLength={5}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: palette.surfaceMuted,
+                        borderColor: palette.border,
+                        color: palette.text,
+                      },
+                    ]}
+                  />
+                </View>
+                <View style={[styles.fieldWrap, { flex: 1 }]}>
+                  <Text style={[styles.fieldLabel, { color: palette.subtext }]}>
+                    CVC / CVV
+                  </Text>
+                  <TextInput
+                    value={cardCvc}
+                    onChangeText={setCardCvc}
+                    placeholder="123"
+                    placeholderTextColor={palette.muted}
+                    keyboardType="numeric"
+                    maxLength={4}
+                    secureTextEntry
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: palette.surfaceMuted,
+                        borderColor: palette.border,
+                        color: palette.text,
+                      },
+                    ]}
+                  />
+                </View>
+              </View>
+
+              <View
+                style={[
+                  styles.sandboxPaymentBadge,
+                  {
+                    backgroundColor: palette.surfaceIce,
+                    borderColor: palette.border,
+                  },
+                ]}
+              >
+                <Lock size={13} color={palette.primary} />
+                <Text
+                  style={[
+                    styles.sandboxPaymentText,
+                    { color: palette.subtext },
+                  ]}
+                >
+                  Secure Sandbox · Test cards accepted
+                </Text>
+              </View>
+            </View>
+
             {/* Compliant Payment & Cancellation Disclosure */}
             <View
               style={[
@@ -454,17 +604,22 @@ export const BookingReviewScreen: React.FC<BookingReviewScreenProps> = ({
               <View style={styles.complianceHeader}>
                 <Lock size={16} color={palette.primary} />
                 <Text style={[styles.complianceTitle, { color: palette.text }]}>
-                  {revalidated.checkoutMode === "provider_hosted_checkout"
-                    ? "PCI-Compliant Provider Hosted Checkout"
+                  {revalidated.checkoutMode === "payment_unavailable" ? "Payment setup required"
+                    : revalidated.checkoutMode === "supplier_balance" ? "Supplier-funded reservation"
+                    : revalidated.checkoutMode === "provider_hosted_checkout" ? "Secure Provider Checkout"
                     : "Verified Sandbox Reservation Flow"}
                 </Text>
               </View>
               <Text
                 style={[styles.complianceDesc, { color: palette.subtext }]}
               >
-                {revalidated.checkoutMode === "provider_hosted_checkout"
-                  ? "goWild never collects raw card numbers in-app. Tapping Continue securely prebooks your quote and launches the supplier's hosted payment session."
-                  : "No raw card details are collected. Confirming submits an idempotent reservation request against the active sandbox/fixture supplier."}
+                {revalidated.checkoutMode === "payment_unavailable"
+                  ? "Live reservations are unavailable until the provider payment integration is configured."
+                  : revalidated.checkoutMode === "supplier_balance"
+                  ? "Confirming submits a real reservation paid from goWild's Duffel balance. No traveler card payment is collected here."
+                  : revalidated.checkoutMode === "provider_hosted_checkout"
+                  ? "Continue to the supplier's secure checkout. Your booking is confirmed only after supplier verification."
+                  : "This is a sandbox reservation. No traveler card payment is collected."}
               </Text>
 
               <View style={styles.policyLine}>
@@ -519,14 +674,11 @@ export const BookingReviewScreen: React.FC<BookingReviewScreenProps> = ({
             ) : null}
 
             <PrimaryButton
-              label={
-                revalidated.checkoutMode === "provider_hosted_checkout"
-                  ? "Continue to Provider Checkout"
-                  : `Confirm Reservation · ${formatMoney(
-                      revalidated.offer.price.total,
-                      revalidated.offer.price.currency
-                    )}`
-              }
+              label={`Pay & Confirm Reservation · ${formatMoney(
+                revalidated.offer.price.total,
+                revalidated.offer.price.currency
+              )}`}
+              icon={<Lock size={16} color="#FFFFFF" />}
               loading={createBookingMutation.isPending}
               onPress={handleSubmit(onSubmit)}
             />
@@ -634,6 +786,16 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
   },
+  formCardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  splitRow: {
+    flexDirection: "row",
+    gap: 12,
+  },
   cardTitle: {
     fontSize: 16,
     fontWeight: "700",
@@ -704,6 +866,46 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     lineHeight: 19,
+  },
+  paymentMethodRow: {
+    flexDirection: "row",
+    gap: 10,
+    marginTop: 4,
+  },
+  paymentMethodBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  cardLogosWrap: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginLeft: "auto",
+  },
+  paymentMethodText: {
+    fontSize: 13,
+    fontWeight: "700",
+  },
+  sandboxPaymentBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginTop: 6,
+  },
+  sandboxPaymentText: {
+    flex: 1,
+    fontSize: 11,
+    lineHeight: 16,
+    fontWeight: "500",
   },
 });
 

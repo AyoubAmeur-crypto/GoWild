@@ -5,6 +5,7 @@ export function GoWildTabs() {
   return (
     <Tabs
       tabBar={(props) => <GoWildGlassTabBar {...props} />}
+      backBehavior="firstRoute"
       screenOptions={{
         headerShown: false,
       }}

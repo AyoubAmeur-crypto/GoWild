@@ -1,0 +1,9 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // All domain access passes through authenticated callable functions. Admin SDK uses IAM, not client rules.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -3,19 +3,18 @@ import {
   View,
   Text,
   TextInput,
-  Modal,
-  Pressable,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from "react-native";
 import { useForm, Controller } from "react-hook-form";
-import { X } from "lucide-react-native";
 import { z } from "zod";
 import type { AuthenticatedUser } from "../../../types/domain";
 import { createZodFormResolver } from "../../../lib/formResolver";
 import { useAppTheme } from "../../../theme/useAppTheme";
 import { PrimaryButton } from "../../../components/ui/PrimaryButton";
+import { AppBottomSheet } from "../../../components/ui/AppBottomSheet";
 
 const EditTravelerSchema = z.object({
   firstName: z.string().trim().min(2, "First name must be at least 2 characters"),
@@ -77,39 +76,34 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   }, [visible, user, reset]);
 
   return (
-    <Modal
+    <AppBottomSheet
       visible={visible}
-      animationType="slide"
-      transparent
-      onRequestClose={onClose}
+      title="Edit Traveler Details"
+      onClose={onClose}
+      footer={
+        <PrimaryButton
+          label="Save Changes"
+          loading={loading}
+          onPress={handleSubmit((vals) =>
+            onSave({
+              ...vals,
+              nationality:
+                vals.nationality && vals.nationality.trim().length === 2
+                  ? vals.nationality.trim().toUpperCase()
+                  : undefined,
+            })
+          )}
+        />
+      }
     >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
-        style={styles.backdrop}
+        style={styles.keyboardWrap}
       >
-        <View
-          style={[
-            styles.sheet,
-            { backgroundColor: palette.background },
-          ]}
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
         >
-          <View style={styles.header}>
-            <Text style={[styles.title, { color: palette.text }]}>
-              Edit Traveler Details
-            </Text>
-            <Pressable
-              onPress={onClose}
-              style={[
-                styles.closeBtn,
-                { backgroundColor: palette.surfaceMuted },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Close edit profile"
-            >
-              <X size={18} color={palette.text} />
-            </Pressable>
-          </View>
-
           <View style={styles.fields}>
             {(
               [
@@ -161,54 +155,20 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               </View>
             ))}
           </View>
-
-          <PrimaryButton
-            label="Save Changes"
-            loading={loading}
-            onPress={handleSubmit((vals) =>
-              onSave({
-                ...vals,
-                nationality:
-                  vals.nationality && vals.nationality.trim().length === 2
-                    ? vals.nationality.trim().toUpperCase()
-                    : undefined,
-              })
-            )}
-          />
-        </View>
+        </ScrollView>
       </KeyboardAvoidingView>
-    </Modal>
+    </AppBottomSheet>
   );
 };
 
 const styles = StyleSheet.create({
-  backdrop: {
-    flex: 1,
-    backgroundColor: "rgba(23,23,37,0.52)",
-    justifyContent: "flex-end",
+  keyboardWrap: {
+    width: "100%",
   },
-  sheet: {
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
-    padding: 22,
-    paddingBottom: 34,
-    gap: 18,
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  closeBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
+    paddingBottom: 16,
   },
   fields: {
     gap: 12,
@@ -232,4 +192,5 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
 });
+
 

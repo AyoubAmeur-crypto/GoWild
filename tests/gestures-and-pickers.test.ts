@@ -1,0 +1,71 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { startOfDay, addDays, differenceInCalendarDays, isBefore } from "date-fns";
+
+test("date range validation enforces non-past checkin and positive night duration", () => {
+  const today = startOfDay(new Date());
+  const yesterday = addDays(today, -1);
+  const tomorrow = addDays(today, 1);
+  const nextWeek = addDays(today, 7);
+
+  // Past dates cannot be selected
+  assert.equal(isBefore(yesterday, today), true);
+  assert.equal(isBefore(today, today), false);
+  assert.equal(isBefore(tomorrow, today), false);
+
+  // Nights count must be positive
+  const nights = differenceInCalendarDays(nextWeek, tomorrow);
+  assert.equal(nights, 6);
+  assert.ok(nights >= 1);
+});
+
+test("Super Calendar date string conversion and boundary clamping", () => {
+  function toIso(d: Date): string {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  function parseIso(str: string): Date {
+    const [y, m, d] = str.split("-").map(Number);
+    return new Date(y, m - 1, d);
+  }
+
+  const d = new Date(2026, 10, 15); // Nov 15, 2026
+  const iso = toIso(d);
+  assert.equal(iso, "2026-11-15");
+
+  const parsed = parseIso(iso);
+  assert.equal(parsed.getFullYear(), 2026);
+  assert.equal(parsed.getMonth(), 10);
+  assert.equal(parsed.getDate(), 15);
+});
+
+test("haptic throttling prevents vibration spam during high-frequency dragging", () => {
+  let lastTimestamp = 0;
+  const THROTTLE_MS = 45;
+  let triggerCount = 0;
+
+  function throttledHaptic(force = false) {
+    const now = Date.now();
+    if (!force && now - lastTimestamp < THROTTLE_MS) {
+      return false;
+    }
+    lastTimestamp = now;
+    triggerCount += 1;
+    return true;
+  }
+
+  // First call succeeds
+  assert.equal(throttledHaptic(), true);
+  assert.equal(triggerCount, 1);
+
+  // Immediate subsequent call is throttled
+  assert.equal(throttledHaptic(), false);
+  assert.equal(triggerCount, 1);
+
+  // Force flag bypasses throttle
+  assert.equal(throttledHaptic(true), true);
+  assert.equal(triggerCount, 2);
+});

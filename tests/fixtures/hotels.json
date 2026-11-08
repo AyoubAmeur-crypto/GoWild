@@ -1,0 +1,994 @@
+[
+  {
+    "id": "gw-htl-maison-rivoli",
+    "providerId": "development_fixtures",
+    "name": "Maison Rivoli Jardin",
+    "starRating": 5,
+    "reviewScore": 4.9,
+    "reviewCount": 418,
+    "propertyType": "boutique",
+    "summary": "Haussmannian courtyard hotel steps from the Tuileries Garden.",
+    "description": "Set behind a limestone facade on Rue de Rivoli, Maison Rivoli Jardin pairs quiet courtyard suites with bespoke French joinery, an underground thermal spa, and morning pastries baked in-house.",
+    "location": {
+      "address": "214 Rue de Rivoli",
+      "city": "Paris",
+      "country": "France",
+      "countryCode": "FR",
+      "postalCode": "75001",
+      "latitude": 48.8651,
+      "longitude": 2.3292,
+      "distanceFromCenterKm": 0.8
+    },
+    "images": [
+      {
+        "id": "img-rivoli-1",
+        "url": "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Illuminated courtyard pool & terrace",
+        "isHero": true
+      },
+      {
+        "id": "img-rivoli-2",
+        "url": "https://images.unsplash.com/photo-1590490360182-c33d57733427?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Deluxe King Room with oak parquet"
+      },
+      {
+        "id": "img-rivoli-3",
+        "url": "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Panoramic Junior Suite salon"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "spa",
+        "label": "Wellness Spa & Sauna",
+        "category": "wellness"
+      },
+      {
+        "code": "breakfast",
+        "label": "Artisanal Breakfast",
+        "category": "dining"
+      },
+      {
+        "code": "restaurant",
+        "label": "Signature Restaurant",
+        "category": "dining"
+      },
+      {
+        "code": "concierge",
+        "label": "24/7 Concierge",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      },
+      {
+        "code": "accessible",
+        "label": "Step-Free Access",
+        "category": "accessibility"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "12:00",
+      "cancellationSummary": "Free cancellation up to 48 hours prior to arrival on flexible rates.",
+      "childrenPolicy": "Children of all ages welcome; cribs complimentary upon request.",
+      "petsAllowed": false,
+      "importantNotes": "Government-issued photo ID and credit authorization required at check-in."
+    },
+    "lowestNightlyPrice": {
+      "amount": 366.6,
+      "currency": "USD"
+    },
+    "compareAtNightlyPrice": {
+      "amount": 453.49,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": true,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-rivoli-1",
+        "authorName": "Claire Beaumont",
+        "rating": 5,
+        "date": "2026-09-18",
+        "comment": "Impeccable soundproofing right in central Paris and genuinely warm concierge service.",
+        "sourceLabel": "Verified Fixture Sample"
+      },
+      {
+        "id": "rev-rivoli-2",
+        "authorName": "Daniel Hofstetter",
+        "rating": 4.8,
+        "date": "2026-08-29",
+        "comment": "Breakfast in the winter garden and spacious marble shower made our anniversary stay effortless.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-riad-zitoune",
+    "providerId": "development_fixtures",
+    "name": "Riad Dar Zitoune & Spa",
+    "starRating": 5,
+    "reviewScore": 4.9,
+    "reviewCount": 289,
+    "propertyType": "boutique",
+    "summary": "Restored 18th-century cedarwood palace in Marrakech Medina.",
+    "description": "Centered around an orange-blossom courtyard and emerald zellige plunge pool, Riad Dar Zitoune offers traditional marble hammam rituals, Atlas Mountain rooftop views, and private airport transfers.",
+    "location": {
+      "address": "Derb El Ferrane 18, Médina",
+      "city": "Marrakech",
+      "country": "Morocco",
+      "countryCode": "MA",
+      "postalCode": "40000",
+      "latitude": 31.6258,
+      "longitude": -7.9891,
+      "distanceFromCenterKm": 0.6
+    },
+    "images": [
+      {
+        "id": "img-riad-1",
+        "url": "https://images.unsplash.com/photo-1539037116277-4db20889f2d4?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Zellige courtyard pool & lanterns",
+        "isHero": true
+      },
+      {
+        "id": "img-riad-2",
+        "url": "https://images.unsplash.com/photo-1596394516093-501ba68a0ba6?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Tadelakt & carved cedar suite"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "pool",
+        "label": "Heated Infinity Pool",
+        "category": "wellness"
+      },
+      {
+        "code": "spa",
+        "label": "Wellness Spa & Sauna",
+        "category": "wellness"
+      },
+      {
+        "code": "breakfast",
+        "label": "Artisanal Breakfast",
+        "category": "dining"
+      },
+      {
+        "code": "restaurant",
+        "label": "Signature Restaurant",
+        "category": "dining"
+      },
+      {
+        "code": "airport_shuttle",
+        "label": "Airport Transfer",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "14:00",
+      "checkOutUntil": "12:00",
+      "cancellationSummary": "Free cancellation up to 72 hours prior to check-in.",
+      "childrenPolicy": "Children aged 6 and older welcome.",
+      "petsAllowed": false
+    },
+    "lowestNightlyPrice": {
+      "amount": 216.2,
+      "currency": "USD"
+    },
+    "compareAtNightlyPrice": {
+      "amount": 280.49,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": true,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-riad-1",
+        "authorName": "Yasmine El Idrissi",
+        "rating": 5,
+        "date": "2026-10-12",
+        "comment": "An oasis of calm steps from Jemaa el-Fnaa. Homemade Moroccan breakfast on the roof was extraordinary.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-caldera-oia",
+    "providerId": "development_fixtures",
+    "name": "Caldera Horizon Resort",
+    "starRating": 5,
+    "reviewScore": 4.9,
+    "reviewCount": 376,
+    "propertyType": "resort",
+    "summary": "Cliffside Aegean cave suites with heated plunge pools in Oia.",
+    "description": "Carved into Oia's volcanic caldera cliffs, Caldera Horizon Resort frames uninterrupted Aegean sunsets from private heated infinity pools and Aegean tasting terraces.",
+    "location": {
+      "address": "Nik. Nomikou Cliff Walk",
+      "city": "Santorini",
+      "country": "Greece",
+      "countryCode": "GR",
+      "postalCode": "84702",
+      "latitude": 36.4618,
+      "longitude": 25.3753,
+      "distanceFromCenterKm": 0.4
+    },
+    "images": [
+      {
+        "id": "img-caldera-1",
+        "url": "https://images.unsplash.com/photo-1570077188670-e3a8d69ac5ff?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Aegean caldera terrace",
+        "isHero": true
+      },
+      {
+        "id": "img-caldera-2",
+        "url": "https://images.unsplash.com/photo-1584132967334-10e028bd69f7?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Cliffside infinity pool"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "pool",
+        "label": "Heated Infinity Pool",
+        "category": "wellness"
+      },
+      {
+        "code": "spa",
+        "label": "Wellness Spa & Sauna",
+        "category": "wellness"
+      },
+      {
+        "code": "breakfast",
+        "label": "Artisanal Breakfast",
+        "category": "dining"
+      },
+      {
+        "code": "airport_shuttle",
+        "label": "Airport Transfer",
+        "category": "service"
+      },
+      {
+        "code": "concierge",
+        "label": "24/7 Concierge",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "11:00",
+      "cancellationSummary": "Free cancellation up to 7 days prior to arrival.",
+      "childrenPolicy": "Recommended for guests aged 12+ due to cliffside terraces.",
+      "petsAllowed": false
+    },
+    "lowestNightlyPrice": {
+      "amount": 432.4,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": true,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-caldera-1",
+        "authorName": "Nikos Papadopoulos",
+        "rating": 4.9,
+        "date": "2026-09-05",
+        "comment": "Unmatched sunset panorama and attentive bell staff.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-sora-aoyama",
+    "providerId": "development_fixtures",
+    "name": "Sora Residence Aoyama",
+    "starRating": 5,
+    "reviewScore": 4.8,
+    "reviewCount": 532,
+    "propertyType": "hotel",
+    "summary": "Skyline architectural sanctuary in Minami-Aoyama, Tokyo.",
+    "description": "Designed around hinoki wood, basalt stone, and panoramic Shibuya-to-Tower views, Sora Residence Aoyama features a 26th-floor lap pool, private hinoki baths, and direct metro access.",
+    "location": {
+      "address": "5-7-21 Minami-Aoyama, Minato-ku",
+      "city": "Tokyo",
+      "country": "Japan",
+      "countryCode": "JP",
+      "postalCode": "107-0062",
+      "latitude": 35.6628,
+      "longitude": 139.7125,
+      "distanceFromCenterKm": 2.4
+    },
+    "images": [
+      {
+        "id": "img-sora-1",
+        "url": "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Aoyama architectural lobby & garden",
+        "isHero": true
+      },
+      {
+        "id": "img-sora-2",
+        "url": "https://images.unsplash.com/photo-1618773928121-c32242e63f39?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Skyline King Room"
+      },
+      {
+        "id": "img-sora-3",
+        "url": "https://images.unsplash.com/photo-1578683010236-d716f9a3f461?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Hinoki soaking suite"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "pool",
+        "label": "Heated Infinity Pool",
+        "category": "wellness"
+      },
+      {
+        "code": "spa",
+        "label": "Wellness Spa & Sauna",
+        "category": "wellness"
+      },
+      {
+        "code": "fitness",
+        "label": "24h Fitness Studio",
+        "category": "wellness"
+      },
+      {
+        "code": "restaurant",
+        "label": "Signature Restaurant",
+        "category": "dining"
+      },
+      {
+        "code": "laundry",
+        "label": "Valet Laundry",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "11:00",
+      "cancellationSummary": "Free cancellation up to 72 hours before check-in on refundable plans.",
+      "childrenPolicy": "Children under 12 stay free when sharing existing bedding.",
+      "petsAllowed": false,
+      "importantNotes": "Tokyo municipal accommodation tax is itemized in the total price breakdown."
+    },
+    "lowestNightlyPrice": {
+      "amount": 319.6,
+      "currency": "USD"
+    },
+    "compareAtNightlyPrice": {
+      "amount": 377.78,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": true,
+    "bedSummary": "2 beds",
+    "bathSummary": "1 bath",
+    "reviews": [
+      {
+        "id": "rev-sora-1",
+        "authorName": "Mirai Kamazuki",
+        "rating": 5,
+        "date": "2026-10-04",
+        "comment": "Quiet, serene design in the heart of Aoyama. Pool deck views at dusk are unforgettable.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-elysian-sandiego",
+    "providerId": "development_fixtures",
+    "name": "Elysian Bay Suites",
+    "starRating": 4,
+    "reviewScore": 4.7,
+    "reviewCount": 312,
+    "propertyType": "hotel",
+    "summary": "Coastal contemporary suites overlooking San Diego Marina.",
+    "description": "Steps from Embarcadero waterfront trails, Elysian Bay Suites offers sunlit California suites with private balconies, a heated saltwater pool, and coastal Baja-Mediterranean dining.",
+    "location": {
+      "address": "840 West Harbor Drive",
+      "city": "San Diego",
+      "state": "CA",
+      "country": "United States",
+      "countryCode": "US",
+      "postalCode": "92101",
+      "latitude": 32.7104,
+      "longitude": -117.1698,
+      "distanceFromCenterKm": 1.1
+    },
+    "images": [
+      {
+        "id": "img-elysian-1",
+        "url": "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Harborfront infinity terrace",
+        "isHero": true
+      },
+      {
+        "id": "img-elysian-2",
+        "url": "https://images.unsplash.com/photo-1591088398332-8a7791972843?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Marina View King Suite"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "pool",
+        "label": "Heated Infinity Pool",
+        "category": "wellness"
+      },
+      {
+        "code": "fitness",
+        "label": "24h Fitness Studio",
+        "category": "wellness"
+      },
+      {
+        "code": "breakfast",
+        "label": "Artisanal Breakfast",
+        "category": "dining"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      },
+      {
+        "code": "accessible",
+        "label": "Step-Free Access",
+        "category": "accessibility"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "16:00",
+      "checkOutUntil": "11:00",
+      "cancellationSummary": "Free cancellation up to 24 hours before arrival.",
+      "childrenPolicy": "Family suites accommodate up to 2 children.",
+      "petsAllowed": true
+    },
+    "lowestNightlyPrice": {
+      "amount": 249.1,
+      "currency": "USD"
+    },
+    "compareAtNightlyPrice": {
+      "amount": 311.76,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": true,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-elysian-1",
+        "authorName": "Kim Borrdy",
+        "rating": 4.7,
+        "date": "2026-09-22",
+        "comment": "Bright coastal rooms even better than the photos. Walkable to the ferry and waterfront.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-astra-grand-nyc",
+    "providerId": "development_fixtures",
+    "name": "Astra Grand Mercer",
+    "starRating": 5,
+    "reviewScore": 4.6,
+    "reviewCount": 645,
+    "propertyType": "hotel",
+    "summary": "Cast-iron SoHo landmark hotel with rooftop conservatory.",
+    "description": "Occupying a restored 1898 cast-iron loft on Mercer Street, Astra Grand Mercer offers high-ceilinged rooms, triple-pane acoustic windows, and an all-season rooftop conservatory.",
+    "location": {
+      "address": "142 Mercer Street",
+      "city": "New York",
+      "state": "NY",
+      "country": "United States",
+      "countryCode": "US",
+      "postalCode": "10012",
+      "latitude": 40.7248,
+      "longitude": -73.9985,
+      "distanceFromCenterKm": 1.5
+    },
+    "images": [
+      {
+        "id": "img-astra-1",
+        "url": "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=1200&q=80",
+        "caption": "SoHo architectural atrium",
+        "isHero": true
+      },
+      {
+        "id": "img-astra-2",
+        "url": "https://images.unsplash.com/photo-1631049307264-da0ec9d70304?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Loft King Suite"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "fitness",
+        "label": "24h Fitness Studio",
+        "category": "wellness"
+      },
+      {
+        "code": "restaurant",
+        "label": "Signature Restaurant",
+        "category": "dining"
+      },
+      {
+        "code": "concierge",
+        "label": "24/7 Concierge",
+        "category": "service"
+      },
+      {
+        "code": "laundry",
+        "label": "Valet Laundry",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      },
+      {
+        "code": "accessible",
+        "label": "Step-Free Access",
+        "category": "accessibility"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "12:00",
+      "cancellationSummary": "Free cancellation up to 48 hours before arrival.",
+      "childrenPolicy": "Children welcome; connecting loft suites available.",
+      "petsAllowed": true
+    },
+    "lowestNightlyPrice": {
+      "amount": 333.7,
+      "currency": "USD"
+    },
+    "compareAtNightlyPrice": {
+      "amount": 403.41,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": true,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-astra-1",
+        "authorName": "Marcus Sterling",
+        "rating": 4.7,
+        "date": "2026-09-11",
+        "comment": "Best location in SoHo, super quiet windows, and crisp linen.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-arashiyama-ryokan",
+    "providerId": "development_fixtures",
+    "name": "Kiri Villa Arashiyama",
+    "starRating": 5,
+    "reviewScore": 4.9,
+    "reviewCount": 215,
+    "propertyType": "villa",
+    "summary": "Riverside cedar pavilions beside Kyoto's Katsura River.",
+    "description": "Surrounded by moss gardens and bamboo groves in Arashiyama, Kiri Villa combines contemporary Western bedding with private open-air onsen baths and seasonal kaiseki dining.",
+    "location": {
+      "address": "12 Susukinobaba-cho, Saga-Tenryuji",
+      "city": "Kyoto",
+      "country": "Japan",
+      "countryCode": "JP",
+      "postalCode": "616-8385",
+      "latitude": 35.0138,
+      "longitude": 135.6768,
+      "distanceFromCenterKm": 6.8
+    },
+    "images": [
+      {
+        "id": "img-kiri-1",
+        "url": "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Kyoto garden pavilion",
+        "isHero": true
+      },
+      {
+        "id": "img-kiri-2",
+        "url": "https://images.unsplash.com/photo-1540541338287-41700207dee6?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Private courtyard bath"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "spa",
+        "label": "Wellness Spa & Sauna",
+        "category": "wellness"
+      },
+      {
+        "code": "breakfast",
+        "label": "Artisanal Breakfast",
+        "category": "dining"
+      },
+      {
+        "code": "restaurant",
+        "label": "Signature Restaurant",
+        "category": "dining"
+      },
+      {
+        "code": "concierge",
+        "label": "24/7 Concierge",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "11:00",
+      "cancellationSummary": "Free cancellation up to 72 hours prior to arrival.",
+      "childrenPolicy": "All ages welcome.",
+      "petsAllowed": false
+    },
+    "lowestNightlyPrice": {
+      "amount": 394.8,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": false,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-kiri-1",
+        "authorName": "Hannah Lindqvist",
+        "rating": 5,
+        "date": "2026-10-09",
+        "comment": "Morning mist over the river from our private cedar bath was unforgettable.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-opal-grove-lajolla",
+    "providerId": "development_fixtures",
+    "name": "Opal Grove Coastal Villa",
+    "starRating": 5,
+    "reviewScore": 4.8,
+    "reviewCount": 194,
+    "propertyType": "villa",
+    "summary": "Clifftop garden villas above La Jolla Cove in San Diego.",
+    "description": "Tucked among olive trees above the Pacific bluffs, Opal Grove Coastal Villa blends indoor-outdoor California living with firepit terraces and private plunge pools.",
+    "location": {
+      "address": "1290 Prospect Street",
+      "city": "San Diego",
+      "state": "CA",
+      "country": "United States",
+      "countryCode": "US",
+      "postalCode": "92037",
+      "latitude": 32.8489,
+      "longitude": -117.2742,
+      "distanceFromCenterKm": 14.2
+    },
+    "images": [
+      {
+        "id": "img-opal-1",
+        "url": "https://images.unsplash.com/photo-1613490493576-7fde63acd811?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Pacific terrace & private pool",
+        "isHero": true
+      },
+      {
+        "id": "img-opal-2",
+        "url": "https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Primary oceanfront bedroom"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "pool",
+        "label": "Heated Infinity Pool",
+        "category": "wellness"
+      },
+      {
+        "code": "laundry",
+        "label": "Valet Laundry",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      },
+      {
+        "code": "concierge",
+        "label": "24/7 Concierge",
+        "category": "service"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "11:00",
+      "cancellationSummary": "Free cancellation up to 5 days before check-in.",
+      "childrenPolicy": "Welcomes families of all sizes.",
+      "petsAllowed": true
+    },
+    "lowestNightlyPrice": {
+      "amount": 291.4,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": false,
+    "bedSummary": "3 beds",
+    "bathSummary": "3 baths",
+    "reviews": [
+      {
+        "id": "rev-opal-1",
+        "authorName": "Elena Vance",
+        "rating": 4.9,
+        "date": "2026-10-01",
+        "comment": "Waking up to Pacific mist from our private terrace was pure magic.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-mayfair-mews",
+    "providerId": "development_fixtures",
+    "name": "The Bloomsbury & Mayfair House",
+    "starRating": 5,
+    "reviewScore": 4.8,
+    "reviewCount": 409,
+    "propertyType": "hotel",
+    "summary": "Georgian townhouse luxury in Mayfair, London.",
+    "description": "Combining two Georgian brick townhouses near Mount Street Gardens, this refined London address offers wood-paneled library lounges, afternoon tea, and tranquil garden rooms.",
+    "location": {
+      "address": "34 Carlos Place, Mayfair",
+      "city": "London",
+      "country": "United Kingdom",
+      "countryCode": "GB",
+      "postalCode": "W1K 3AN",
+      "latitude": 51.5101,
+      "longitude": -0.1496,
+      "distanceFromCenterKm": 1.6
+    },
+    "images": [
+      {
+        "id": "img-mayfair-1",
+        "url": "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Georgian courtyard entrance",
+        "isHero": true
+      },
+      {
+        "id": "img-mayfair-2",
+        "url": "https://images.unsplash.com/photo-1595576508898-0ad5c879a061?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Mayfair King Suite"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "breakfast",
+        "label": "Artisanal Breakfast",
+        "category": "dining"
+      },
+      {
+        "code": "restaurant",
+        "label": "Signature Restaurant",
+        "category": "dining"
+      },
+      {
+        "code": "concierge",
+        "label": "24/7 Concierge",
+        "category": "service"
+      },
+      {
+        "code": "fitness",
+        "label": "24h Fitness Studio",
+        "category": "wellness"
+      },
+      {
+        "code": "laundry",
+        "label": "Valet Laundry",
+        "category": "service"
+      },
+      {
+        "code": "accessible",
+        "label": "Step-Free Access",
+        "category": "accessibility"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "12:00",
+      "cancellationSummary": "Free cancellation until 14:00 local time 2 days prior to arrival.",
+      "childrenPolicy": "Children welcome; interconnecting townhouse rooms available.",
+      "petsAllowed": false
+    },
+    "lowestNightlyPrice": {
+      "amount": 352.5,
+      "currency": "USD"
+    },
+    "compareAtNightlyPrice": {
+      "amount": 421.35,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": false,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-mayfair-1",
+        "authorName": "Oliver Wright",
+        "rating": 4.8,
+        "date": "2026-09-30",
+        "comment": "Understated British elegance on a quiet Mayfair square.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  },
+  {
+    "id": "gw-htl-baur-limmat",
+    "providerId": "development_fixtures",
+    "name": "Limmatquai Residence",
+    "starRating": 4,
+    "reviewScore": 4.7,
+    "reviewCount": 184,
+    "propertyType": "apartment",
+    "summary": "Serviced architectural apartments along Zurich's Old Town riverfront.",
+    "description": "Overlooking the Limmat River and Grossmünster spires, Limmatquai Residence pairs Swiss precision kitchens and washer-dryers with full hotel concierge and spa access.",
+    "location": {
+      "address": "Limmatquai 62",
+      "city": "Zurich",
+      "country": "Switzerland",
+      "countryCode": "CH",
+      "postalCode": "8001",
+      "latitude": 47.3717,
+      "longitude": 8.5435,
+      "distanceFromCenterKm": 0.4
+    },
+    "images": [
+      {
+        "id": "img-limmat-1",
+        "url": "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Riverfront living room",
+        "isHero": true
+      },
+      {
+        "id": "img-limmat-2",
+        "url": "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80",
+        "caption": "Minimalist Swiss bedroom"
+      }
+    ],
+    "amenities": [
+      {
+        "code": "wifi",
+        "label": "Free High-Speed Wi-Fi",
+        "category": "connectivity"
+      },
+      {
+        "code": "fitness",
+        "label": "24h Fitness Studio",
+        "category": "wellness"
+      },
+      {
+        "code": "laundry",
+        "label": "Valet Laundry",
+        "category": "service"
+      },
+      {
+        "code": "concierge",
+        "label": "24/7 Concierge",
+        "category": "service"
+      },
+      {
+        "code": "air_conditioning",
+        "label": "Climate Control",
+        "category": "room"
+      },
+      {
+        "code": "accessible",
+        "label": "Step-Free Access",
+        "category": "accessibility"
+      }
+    ],
+    "policies": {
+      "checkInFrom": "15:00",
+      "checkOutUntil": "11:00",
+      "cancellationSummary": "Free cancellation up to 48 hours before arrival.",
+      "childrenPolicy": "Ideal for extended family stays.",
+      "petsAllowed": true
+    },
+    "lowestNightlyPrice": {
+      "amount": 277.3,
+      "currency": "USD"
+    },
+    "isFreeCancellationAvailable": true,
+    "isInstantConfirmation": true,
+    "isFeatured": false,
+    "bedSummary": "2 beds",
+    "bathSummary": "2 baths",
+    "reviews": [
+      {
+        "id": "rev-limmat-1",
+        "authorName": "Lukas Meyer",
+        "rating": 4.7,
+        "date": "2026-08-19",
+        "comment": "5-minute walk to Zürich HB with spacious apartment living.",
+        "sourceLabel": "Verified Fixture Sample"
+      }
+    ]
+  }
+]

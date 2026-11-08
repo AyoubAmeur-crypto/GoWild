@@ -1,27 +1,46 @@
-import React, { useMemo, useState } from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
-import { ChevronLeft, ChevronRight, Calendar } from "lucide-react-native";
+import React, { useMemo, useCallback, useEffect, useRef } from "react";
+import { View, Text, StyleSheet } from "react-native";
+import {
+  MonthList,
+  useDateRange,
+  CalendarThemeProvider,
+  mergeTheme,
+  defaultTheme,
+  darkTheme,
+  type DateRange,
+  type CalendarTheme,
+  type PartialCalendarTheme,
+} from "@super-calendar/native/picker";
+import {
+  addDays,
+  subDays,
+  startOfDay,
+  isBefore,
+  differenceInCalendarDays,
+  format,
+} from "date-fns";
+import { Minus, Plus, ArrowRight, Calendar } from "lucide-react-native";
 import { useAppTheme } from "../../../theme/useAppTheme";
-import { calculateNights, formatFullDate } from "../../../lib/pricing";
+import { haptics } from "../../../lib/haptics";
+import { HapticPressable } from "../../../components/ui/HapticPressable";
 
-interface DateRangePickerProps {
+export interface DateRangePickerProps {
   checkIn: string;
   checkOut: string;
   onChange: (checkIn: string, checkOut: string) => void;
 }
 
-const WEEKDAYS = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
-
-function toIsoDate(year: number, monthIndex: number, day: number): string {
-  const m = String(monthIndex + 1).padStart(2, "0");
-  const d = String(day).padStart(2, "0");
-  return `${year}-${m}-${d}`;
+function parseIso(isoStr: string): Date {
+  const [y, m, d] = isoStr.split("-").map(Number);
+  if (!y || !m || !d) return startOfDay(new Date());
+  return new Date(y, m - 1, d);
 }
 
-function addDaysIso(isoDate: string, days: number): string {
-  const d = new Date(`${isoDate}T12:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().slice(0, 10);
+function toIso(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
 }
 
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
@@ -29,219 +48,301 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   checkOut,
   onChange,
 }) => {
-  const { palette } = useAppTheme();
-  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const { palette, isDark } = useAppTheme();
+  const today = useMemo(() => startOfDay(new Date()), []);
 
-  const initialDate = useMemo(() => {
-    const parsed = new Date(`${checkIn}T12:00:00Z`);
-    return Number.isNaN(parsed.getTime()) ? new Date() : parsed;
-  }, [checkIn]);
+  const parsedIn = useMemo(() => parseIso(checkIn), [checkIn]);
+  const parsedOut = useMemo(() => parseIso(checkOut), [checkOut]);
 
-  const [viewYear, setViewYear] = useState(initialDate.getUTCFullYear());
-  const [viewMonth, setViewMonth] = useState(initialDate.getUTCMonth());
-  const [selectingEnd, setSelectingEnd] = useState(false);
+  // Controlled date-range hook from Super Calendar
+  const { range, onPressDate, selectRange, setRange } = useDateRange({
+    minDate: today,
+    initialRange: {
+      start: parsedIn,
+      end: parsedOut,
+    },
+  });
 
-  const monthLabel = useMemo(() => {
-    const d = new Date(Date.UTC(viewYear, viewMonth, 1));
-    return d.toLocaleDateString("en-US", {
-      month: "long",
-      year: "numeric",
-      timeZone: "UTC",
+  // Track previous range to synchronize with parent and trigger haptics
+  const prevRangeRef = useRef<DateRange | null>(range);
+
+  useEffect(() => {
+    // Sync external props change if range differs
+    if (
+      !range ||
+      toIso(range.start) !== checkIn ||
+      (range.end && toIso(range.end) !== checkOut)
+    ) {
+      setRange({
+        start: parsedIn,
+        end: parsedOut,
+      });
+    }
+  }, [checkIn, checkOut, parsedIn, parsedOut, setRange]);
+
+  // When user selects a range through the calendar
+  useEffect(() => {
+    if (!range) return;
+
+    const prev = prevRangeRef.current;
+    const startChanged = !prev || toIso(prev.start) !== toIso(range.start);
+    const endChanged = !prev || (prev.end && range.end ? toIso(prev.end) !== toIso(range.end) : prev.end !== range.end);
+
+    if (startChanged || endChanged) {
+      prevRangeRef.current = range;
+
+      if (range.start && range.end) {
+        haptics.success();
+        onChange(toIso(range.start), toIso(range.end));
+      } else {
+        haptics.selection();
+      }
+    }
+  }, [range, onChange]);
+
+  // Handle day press
+  const handlePressDay = useCallback(
+    (day: Date) => {
+      if (isBefore(day, today)) {
+        haptics.warning();
+        return;
+      }
+      haptics.selection();
+      onPressDate(day);
+    },
+    [today, onPressDate]
+  );
+
+  // Handle drag-to-select with Super Calendar
+  const handleSelectDrag = useCallback(
+    (start: Date, end: Date) => {
+      const validStart = isBefore(start, today) ? today : start;
+      if (isBefore(end, validStart)) return;
+
+      haptics.selection();
+      selectRange(validStart, end);
+    },
+    [today, selectRange]
+  );
+
+  // Endpoint adjusters: extend or shorten Check-In without restarting selection
+  const handleAdjustCheckIn = useCallback(
+    (deltaDays: number) => {
+      if (!range?.start) return;
+      const newStart = addDays(range.start, deltaDays);
+
+      if (isBefore(newStart, today)) {
+        haptics.warning();
+        return;
+      }
+
+      const currentEnd = range.end || addDays(range.start, 1);
+      if (differenceInCalendarDays(currentEnd, newStart) < 1) {
+        // Pushing checkout forward by 1 night if checkin reaches it
+        const pushedEnd = addDays(newStart, 1);
+        haptics.selection(true);
+        selectRange(newStart, pushedEnd);
+        onChange(toIso(newStart), toIso(pushedEnd));
+      } else {
+        haptics.selection(true);
+        selectRange(newStart, currentEnd);
+        onChange(toIso(newStart), toIso(currentEnd));
+      }
+    },
+    [range, today, selectRange, onChange]
+  );
+
+  // Endpoint adjusters: extend or shorten Check-Out without restarting selection
+  const handleAdjustCheckOut = useCallback(
+    (deltaDays: number) => {
+      if (!range?.start) return;
+      const currentEnd = range.end || addDays(range.start, 1);
+      const newEnd = addDays(currentEnd, deltaDays);
+
+      if (differenceInCalendarDays(newEnd, range.start) < 1) {
+        haptics.warning();
+        return;
+      }
+
+      haptics.selection(true);
+      selectRange(range.start, newEnd);
+      onChange(toIso(range.start), toIso(newEnd));
+    },
+    [range, selectRange, onChange]
+  );
+
+  // Total nights calculation
+  const totalNights = useMemo(() => {
+    if (!range?.start || !range?.end) return 1;
+    return Math.max(1, differenceInCalendarDays(range.end, range.start));
+  }, [range]);
+
+  // Custom Super Calendar theme matching goWild brand tokens
+  const customTheme = useMemo<CalendarTheme>(() => {
+    const base = isDark ? darkTheme : defaultTheme;
+    return mergeTheme({
+      ...base,
+      colors: {
+        ...base.colors,
+        surface: isDark ? "#121214" : "#FFFFFF",
+        selectedBackground: palette.primary,
+        selectedText: "#FFFFFF",
+        rangeBackground: isDark ? "rgba(40, 83, 175, 0.28)" : "#E8F2FF",
+        todayBackground: palette.brandSky,
+        todayText: "#FFFFFF",
+        text: isDark ? "#FFFFFF" : "#171725",
+        textMuted: isDark ? "#71717A" : "#717171",
+        textDisabled: isDark ? "#3F3F46" : "#D1D5DB",
+        gridLine: isDark ? "#27272A" : "#EEEEEE",
+        weekendBackground: isDark ? "#15171C" : "#FBFBFC",
+      },
+      text: {
+        ...base.text,
+        monthTitle: {
+          fontSize: 16,
+          fontWeight: "700",
+          color: isDark ? "#FFFFFF" : "#171725",
+        },
+        weekday: {
+          fontSize: 12,
+          fontWeight: "600",
+          color: isDark ? "#71717A" : "#8E8E93",
+        },
+        dateCell: {
+          fontSize: 14,
+          fontWeight: "600",
+        },
+      },
+      todayBadgeRadius: 18,
+      rangeBandHeight: 38,
     });
-  }, [viewYear, viewMonth]);
-
-  const calendarCells = useMemo(() => {
-    const firstWeekday = new Date(Date.UTC(viewYear, viewMonth, 1)).getUTCDay();
-    const daysInMonth = new Date(
-      Date.UTC(viewYear, viewMonth + 1, 0)
-    ).getUTCDate();
-
-    const cells: (string | null)[] = [];
-    for (let i = 0; i < firstWeekday; i += 1) {
-      cells.push(null);
-    }
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      cells.push(toIsoDate(viewYear, viewMonth, day));
-    }
-    return cells;
-  }, [viewYear, viewMonth]);
-
-  const shiftMonth = (delta: number) => {
-    const next = new Date(Date.UTC(viewYear, viewMonth + delta, 1));
-    setViewYear(next.getUTCFullYear());
-    setViewMonth(next.getUTCMonth());
-  };
-
-  const handleDayPress = (iso: string) => {
-    if (iso < todayIso) return;
-    if (!selectingEnd || iso <= checkIn) {
-      const nextOut = iso >= checkOut ? addDaysIso(iso, 2) : checkOut;
-      onChange(iso, nextOut);
-      setSelectingEnd(true);
-    } else {
-      onChange(checkIn, iso);
-      setSelectingEnd(false);
-    }
-  };
-
-  const nights = calculateNights(checkIn, checkOut);
+  }, [isDark, palette]);
 
   return (
-    <View
-      style={[
-        styles.container,
-        { backgroundColor: palette.surface, borderColor: palette.border },
-      ]}
-    >
-      {/* Selected Range Summary */}
+    <View style={styles.container}>
+      {/* 1. Interactive Endpoint Summary & Scrubbers */}
       <View
         style={[
-          styles.summaryRow,
-          { backgroundColor: palette.surfaceMuted },
+          styles.summaryCard,
+          {
+            backgroundColor: isDark ? "#18181B" : "#F4F6FA",
+            borderColor: isDark ? "#27272A" : "#E2E8F0",
+          },
         ]}
       >
-        <View style={styles.summaryCol}>
-          <Text style={[styles.summaryCap, { color: palette.subtext }]}>
+        {/* Check-in Endpoint Card */}
+        <View style={styles.endpointCard}>
+          <Text style={[styles.endpointLabel, { color: palette.subtext }]}>
             CHECK-IN
           </Text>
-          <Text style={[styles.summaryVal, { color: palette.text }]}>
-            {formatFullDate(checkIn)}
+          <Text style={[styles.endpointDate, { color: palette.text }]}>
+            {range?.start ? format(range.start, "EEE, MMM d") : "Select date"}
           </Text>
-        </View>
-        <View
-          style={[
-            styles.nightsBadge,
-            { backgroundColor: palette.primaryTint },
-          ]}
-        >
-          <Calendar size={12} color={palette.primary} />
-          <Text style={[styles.nightsText, { color: palette.primary }]}>
-            {nights} {nights === 1 ? "night" : "nights"}
-          </Text>
-        </View>
-        <View style={[styles.summaryCol, { alignItems: "flex-end" }]}>
-          <Text style={[styles.summaryCap, { color: palette.subtext }]}>
-            CHECK-OUT
-          </Text>
-          <Text style={[styles.summaryVal, { color: palette.text }]}>
-            {formatFullDate(checkOut)}
-          </Text>
-        </View>
-      </View>
 
-      {/* Month Navigation */}
-      <View style={styles.monthNav}>
-        <Pressable
-          onPress={() => shiftMonth(-1)}
-          style={[styles.navBtn, { backgroundColor: palette.surfaceMuted }]}
-          accessibilityRole="button"
-          accessibilityLabel="Previous month"
-        >
-          <ChevronLeft size={18} color={palette.text} />
-        </Pressable>
-        <Text style={[styles.monthTitle, { color: palette.text }]}>
-          {monthLabel}
-        </Text>
-        <Pressable
-          onPress={() => shiftMonth(1)}
-          style={[styles.navBtn, { backgroundColor: palette.surfaceMuted }]}
-          accessibilityRole="button"
-          accessibilityLabel="Next month"
-        >
-          <ChevronRight size={18} color={palette.text} />
-        </Pressable>
-      </View>
-
-      {/* Weekday Labels */}
-      <View style={styles.weekRow}>
-        {WEEKDAYS.map((wd) => (
-          <Text
-            key={wd}
-            style={[styles.weekdayText, { color: palette.muted }]}
-          >
-            {wd}
-          </Text>
-        ))}
-      </View>
-
-      {/* Calendar Grid */}
-      <View style={styles.grid}>
-        {calendarCells.map((iso, idx) => {
-          if (!iso) {
-            return <View key={`empty_${idx}`} style={styles.dayCell} />;
-          }
-          const dayNum = Number(iso.slice(8, 10));
-          const isPast = iso < todayIso;
-          const isStart = iso === checkIn;
-          const isEnd = iso === checkOut;
-          const inRange = iso > checkIn && iso < checkOut;
-
-          return (
-            <Pressable
-              key={iso}
-              disabled={isPast}
-              onPress={() => handleDayPress(iso)}
+          <View style={styles.stepperRow}>
+            <HapticPressable
+              onPress={() => handleAdjustCheckIn(-1)}
+              haptic="selection"
               style={[
-                styles.dayCell,
-                inRange && { backgroundColor: palette.primaryTint },
-                (isStart || isEnd) && {
-                  backgroundColor: palette.primary,
-                  borderRadius: 10,
-                },
+                styles.stepperBtn,
+                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
               ]}
-              accessibilityRole="button"
-              accessibilityLabel={`Select ${iso}`}
+              accessibilityLabel="Decrease check-in by one day"
             >
-              <Text
-                style={[
-                  styles.dayText,
-                  {
-                    color:
-                      isStart || isEnd
-                        ? "#FFFFFF"
-                        : isPast
-                          ? palette.muted
-                          : palette.text,
-                    opacity: isPast ? 0.45 : 1,
-                    fontWeight: isStart || isEnd ? "700" : "500",
-                  },
-                ]}
-              >
-                {dayNum}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+              <Minus size={14} color={palette.text} />
+            </HapticPressable>
 
-      {/* Quick Shortcuts */}
-      <View style={styles.quickRow}>
-        {[2, 3, 5, 7].map((n) => (
-          <Pressable
-            key={n}
-            onPress={() => {
-              onChange(checkIn, addDaysIso(checkIn, n));
-              setSelectingEnd(false);
-            }}
+            <HapticPressable
+              onPress={() => handleAdjustCheckIn(1)}
+              haptic="selection"
+              style={[
+                styles.stepperBtn,
+                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
+              ]}
+              accessibilityLabel="Increase check-in by one day"
+            >
+              <Plus size={14} color={palette.text} />
+            </HapticPressable>
+          </View>
+        </View>
+
+        {/* Center Nights Pill */}
+        <View style={styles.centerPillWrap}>
+          <View
             style={[
-              styles.quickChip,
-              {
-                backgroundColor:
-                  nights === n ? palette.primaryTint : palette.surfaceMuted,
-                borderColor: nights === n ? palette.primary : palette.border,
-              },
+              styles.nightsBadge,
+              { backgroundColor: palette.primaryTint },
             ]}
           >
-            <Text
-              style={[
-                styles.quickText,
-                { color: nights === n ? palette.primary : palette.subtext },
-              ]}
-            >
-              {n} nights
+            <Calendar size={12} color={palette.primary} />
+            <Text style={[styles.nightsText, { color: palette.primary }]}>
+              {totalNights} {totalNights === 1 ? "night" : "nights"}
             </Text>
-          </Pressable>
-        ))}
+          </View>
+          <ArrowRight size={14} color={palette.subtext} />
+        </View>
+
+        {/* Check-out Endpoint Card */}
+        <View style={styles.endpointCard}>
+          <Text style={[styles.endpointLabel, { color: palette.subtext }]}>
+            CHECK-OUT
+          </Text>
+          <Text style={[styles.endpointDate, { color: palette.text }]}>
+            {range?.end
+              ? format(range.end, "EEE, MMM d")
+              : range?.start
+              ? format(addDays(range.start, 1), "EEE, MMM d")
+              : "Select date"}
+          </Text>
+
+          <View style={styles.stepperRow}>
+            <HapticPressable
+              onPress={() => handleAdjustCheckOut(-1)}
+              haptic="selection"
+              style={[
+                styles.stepperBtn,
+                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
+              ]}
+              accessibilityLabel="Decrease check-out by one day"
+            >
+              <Minus size={14} color={palette.text} />
+            </HapticPressable>
+
+            <HapticPressable
+              onPress={() => handleAdjustCheckOut(1)}
+              haptic="selection"
+              style={[
+                styles.stepperBtn,
+                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
+              ]}
+              accessibilityLabel="Increase check-out by one day"
+            >
+              <Plus size={14} color={palette.text} />
+            </HapticPressable>
+          </View>
+        </View>
+      </View>
+
+      {/* Drag & Select Tip */}
+      <Text style={[styles.gestureTip, { color: palette.subtext }]}>
+        Tap to pick dates, or long-press & drag across days to extend.
+      </Text>
+
+      {/* 2. Super Calendar MonthList */}
+      <View style={styles.calendarWrap}>
+        <CalendarThemeProvider value={customTheme}>
+          <MonthList
+            date={range?.start || today}
+            selectedRange={range ?? undefined}
+            minDate={today}
+            weekStartsOn={0}
+            weekRowHeight={46}
+            monthHeaderHeight={40}
+            fillCellOnSelection={false}
+            onPressDay={handlePressDay}
+            onSelectDrag={handleSelectDrag}
+          />
+        </CalendarThemeProvider>
       </View>
     </View>
   );
@@ -249,96 +350,75 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 18,
-    borderWidth: 1,
-    padding: 14,
+    width: "100%",
     gap: 12,
   },
-  summaryRow: {
+  summaryCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     padding: 12,
-    borderRadius: 12,
+    borderRadius: 18,
+    borderWidth: 1,
+    gap: 8,
   },
-  summaryCol: {
-    gap: 2,
+  endpointCard: {
+    flex: 1,
+    alignItems: "center",
+    gap: 4,
   },
-  summaryCap: {
+  endpointLabel: {
     fontSize: 10,
     fontWeight: "700",
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
-  summaryVal: {
-    fontSize: 13,
+  endpointDate: {
+    fontSize: 14,
     fontWeight: "700",
+  },
+  stepperRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingTop: 4,
+  },
+  stepperBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  centerPillWrap: {
+    alignItems: "center",
+    gap: 4,
   },
   nightsBadge: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 999,
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
   },
   nightsText: {
+    fontSize: 11,
+    fontWeight: "700",
+  },
+  gestureTip: {
     fontSize: 12,
-    fontWeight: "700",
-  },
-  monthNav: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  navBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  monthTitle: {
-    fontSize: 15,
-    fontWeight: "700",
-  },
-  weekRow: {
-    flexDirection: "row",
-  },
-  weekdayText: {
-    width: "14.28%",
     textAlign: "center",
-    fontSize: 12,
-    fontWeight: "600",
+    paddingHorizontal: 16,
   },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-  },
-  dayCell: {
-    width: "14.28%",
-    height: 38,
-    alignItems: "center",
-    justifyContent: "center",
-    marginVertical: 2,
-  },
-  dayText: {
-    fontSize: 13,
-  },
-  quickRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginTop: 2,
-  },
-  quickChip: {
-    flex: 1,
-    paddingVertical: 7,
-    borderRadius: 999,
-    borderWidth: 1,
-    alignItems: "center",
-  },
-  quickText: {
-    fontSize: 12,
-    fontWeight: "600",
+  calendarWrap: {
+    height: 380,
+    width: "100%",
+    borderRadius: 16,
+    overflow: "hidden",
   },
 });
-

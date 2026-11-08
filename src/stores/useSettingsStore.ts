@@ -36,7 +36,7 @@ interface SettingsState {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      currency: "USD",
+      currency: "MAD",
       language: "en",
       themeMode: "light",
       darkMode: false,

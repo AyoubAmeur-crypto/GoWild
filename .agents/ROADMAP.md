@@ -49,3 +49,13 @@
   - Metro production export succeeds for both iOS and Android.
   - `README/SETUP.md`, `README/DEMO.md`, `.agents/PROGRESS.md`, and `.agents/ISSUES.md` finalized with reproducible commands.
 
+
+
+## Firebase migration milestone — 2026-11-05
+
+Local implementation and automated/emulator/browser verification complete. Next external milestone: Firebase project and OAuth configuration, restricted Maps key and native rebuild, supplier sandbox verification, then cloud deployment of the Node BFF (user prefers Cloud Run + Secret Manager). Live traveler payment integration and any migration of existing real SQLite records require separate implementation/validation.
+
+
+## Managed Firebase milestone — authoritative 2026-11-05
+
+User superseded the standalone Node/Cloud Run plan. Python callable backend, Firebase SDK frontend transport, sandbox providers, private Firestore rules, staged deployment documentation and local verification are complete. Next: configure the actual Firebase project/OAuth/provider sandbox secret and deploy testConnection. No cloud resources were deployed as part of local implementation. Preserve app design, navigation and maps.

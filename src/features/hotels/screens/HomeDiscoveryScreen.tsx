@@ -18,6 +18,8 @@ import {
   Clock,
   Compass,
   ChevronRight,
+  Building2,
+  ArrowRight,
 } from "lucide-react-native";
 import type { PropertyType } from "../../../types/domain";
 import { useAppTheme } from "../../../theme/useAppTheme";
@@ -30,6 +32,10 @@ import { SearchBar } from "../../../components/ui/SearchBar";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { EmptyState } from "../../../components/ui/EmptyState";
+import { PrimaryButton } from "../../../components/ui/PrimaryButton";
+import { SpringBottomSheet } from "../../../components/ui/SpringBottomSheet";
+import { DateRangePicker } from "../../availability/components/DateRangePicker";
+import { GuestCounter } from "../../availability/components/GuestCounter";
 import { useFeaturedHotels } from "../hooks/useHotels";
 import { HotelCard } from "../components/HotelCard";
 import { useNotificationsQuery } from "../../notifications/hooks/useNotifications";
@@ -68,12 +74,11 @@ const TRENDING_CITIES = [
 ];
 
 const CATEGORY_TABS: { key: "all" | PropertyType; label: string }[] = [
-  { key: "all", label: "All" },
+  { key: "all", label: "All Stays" },
   { key: "hotel", label: "Hotels" },
+  { key: "apartment", label: "Airbnb & Rentals" },
   { key: "resort", label: "Resorts" },
   { key: "villa", label: "Villas" },
-  { key: "boutique", label: "Boutique" },
-  { key: "apartment", label: "Apartments" },
 ];
 
 export const HomeDiscoveryScreen: React.FC = () => {
@@ -91,6 +96,10 @@ export const HomeDiscoveryScreen: React.FC = () => {
   const recentSearches = useSearchStore((s) => s.recentSearches);
   const selectPlace = useSearchStore((s) => s.selectPlace);
   const applyRecentSearch = useSearchStore((s) => s.applyRecentSearch);
+  const setDates = useSearchStore((s) => s.setDates);
+  const setOccupancy = useSearchStore((s) => s.setOccupancy);
+
+  const [datesModalOpen, setDatesModalOpen] = useState(false);
 
   const [selectedCategory, setSelectedCategory] = useState<
     "all" | PropertyType
@@ -176,48 +185,48 @@ export const HomeDiscoveryScreen: React.FC = () => {
           />
 
           <View style={styles.tripMetaRow}>
-            <Pressable
-              onPress={() => router.push("/search")}
-              style={[
-                styles.tripMetaChip,
-                {
-                  backgroundColor: palette.surfaceMuted,
-                  borderColor: palette.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Change check-in and check-out dates"
-            >
-              <Calendar size={14} color={palette.primary} />
-              <Text style={[styles.tripMetaText, { color: palette.text }]}>
-                {formatDateRangeShort(checkIn, checkOut)}
-              </Text>
-            </Pressable>
+                <Pressable
+                  onPress={() => setDatesModalOpen(true)}
+                  style={[
+                    styles.tripMetaChip,
+                    {
+                      backgroundColor: palette.surfaceMuted,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Change check-in and check-out dates"
+                >
+                  <Calendar size={14} color={palette.primary} />
+                  <Text style={[styles.tripMetaText, { color: palette.text }]}>
+                    {formatDateRangeShort(checkIn, checkOut)}
+                  </Text>
+                </Pressable>
 
-            <Pressable
-              onPress={() => router.push("/search")}
-              style={[
-                styles.tripMetaChip,
-                {
-                  backgroundColor: palette.surfaceMuted,
-                  borderColor: palette.border,
-                },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel="Change rooms and guests"
-            >
-              <Users size={14} color={palette.primary} />
-              <Text style={[styles.tripMetaText, { color: palette.text }]}>
-                {occupancy.rooms} Rm ·{" "}
-                {occupancy.adults + occupancy.childrenAges.length} Guests
-              </Text>
-            </Pressable>
-          </View>
-        </View>
+                <Pressable
+                  onPress={() => setDatesModalOpen(true)}
+                  style={[
+                    styles.tripMetaChip,
+                    {
+                      backgroundColor: palette.surfaceMuted,
+                      borderColor: palette.border,
+                    },
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel="Change rooms and guests"
+                >
+                  <Users size={14} color={palette.primary} />
+                  <Text style={[styles.tripMetaText, { color: palette.text }]}>
+                    {occupancy.rooms} Rm ·{" "}
+                    {occupancy.adults + occupancy.childrenAges.length} Guests
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
 
         {/* Concise Map Banner */}
         <Pressable
-          onPress={() => router.push("/map")}
+          onPress={() => router.navigate("/map")}
           style={[
             styles.mapBanner,
             { backgroundColor: palette.surfaceIce },
@@ -382,7 +391,7 @@ export const HomeDiscoveryScreen: React.FC = () => {
                 Recommended
               </Text>
               <Pressable
-                onPress={() => router.push("/map")}
+                onPress={() => router.navigate("/map")}
                 accessibilityRole="button"
               >
                 <Text style={[styles.seeAll, { color: palette.primary }]}>
@@ -447,6 +456,31 @@ export const HomeDiscoveryScreen: React.FC = () => {
           </>
         )}
       </ScrollView>
+
+      {/* Smooth Spring Dates & Guests Bottom Sheet */}
+      <SpringBottomSheet
+        visible={datesModalOpen}
+        title="Stay Dates & Travelers"
+        onClose={() => setDatesModalOpen(false)}
+        footer={
+          <PrimaryButton
+            label="Apply Dates & Guests"
+            onPress={() => setDatesModalOpen(false)}
+          />
+        }
+      >
+        <ScrollView
+          contentContainerStyle={{ gap: 14, paddingBottom: 10 }}
+          showsVerticalScrollIndicator={false}
+        >
+          <DateRangePicker
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onChange={setDates}
+          />
+          <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
+        </ScrollView>
+      </SpringBottomSheet>
     </View>
   );
 };

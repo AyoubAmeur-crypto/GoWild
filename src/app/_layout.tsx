@@ -1,6 +1,7 @@
 import "../global.css";
+import { observeFirebaseSession } from "../services/firebase/session";
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Platform } from "react-native";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -14,6 +15,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 export default function RootLayout() {
   const { isDark, palette, reducedMotion } = useAppTheme();
   const [showLaunchSplash, setShowLaunchSplash] = useState(true);
+  useEffect(observeFirebaseSession, []);
 
   useEffect(() => {
     SplashScreen.hideAsync().catch(() => {});
@@ -33,6 +35,8 @@ export default function RootLayout() {
             headerShown: false,
             animation: reducedMotion ? "none" : "default",
             contentStyle: { backgroundColor: palette.background },
+            gestureEnabled: true,
+            fullScreenGestureEnabled: Platform.OS === "ios",
           }}
         >
           <Stack.Screen name="index" />

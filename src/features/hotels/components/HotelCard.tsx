@@ -92,22 +92,23 @@ export const HotelCard: React.FC<HotelCardProps> = ({
   // 2. Compact Horizontal Row ("Recommended" on Home) or Map Preview Card
   if (variant === "compact" || variant === "map") {
     return (
-      <Pressable
-        onPress={onPress}
-        style={({ pressed }) => [
+      <View
+        style={[
           styles.compactCard,
           variant === "map" && styles.mapCardWidth,
           {
             backgroundColor: palette.surface,
-            borderColor: selected ? palette.primary : palette.border,
-            borderWidth: selected ? 2 : 1,
+            borderColor: selected
+              ? (palette.isDark ? "#FFFFFF" : palette.primary)
+              : palette.border,
+            borderWidth: selected ? 1.5 : 1,
           },
           Shadows.cardSubtle,
-          pressed && styles.pressed,
         ]}
-        accessibilityRole="button"
-        accessibilityLabel={`${hotel.name}, ${hotel.location.city}`}
       >
+        <Pressable onPress={onPress} style={({ pressed }) => [styles.compactLink, pressed && styles.pressed]}
+          accessibilityRole="button" accessibilityLabel={`${hotel.name}, ${hotel.location.city}`}>
+
         <Image
           source={{ uri: heroUrl }}
           style={styles.compactThumb}
@@ -117,12 +118,12 @@ export const HotelCard: React.FC<HotelCardProps> = ({
         <View style={styles.compactBody}>
           <View style={styles.compactHeaderRow}>
             <Text
-              style={[styles.compactTitle, { color: palette.text }]}
+              style={[styles.compactTitle, { color: palette.text, paddingRight: 44 }]}
               numberOfLines={1}
             >
               {hotel.name}
             </Text>
-            <FavoriteHeartButton hotelId={hotel.id} />
+
           </View>
 
           <View style={styles.locationRow}>
@@ -150,7 +151,9 @@ export const HotelCard: React.FC<HotelCardProps> = ({
             )}
           </View>
         </View>
-      </Pressable>
+        </Pressable>
+        <View style={styles.compactFavorite}><FavoriteHeartButton hotelId={hotel.id} size="md" /></View>
+      </View>
     );
   }
 
@@ -277,6 +280,8 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: "center",
   },
+  compactLink: { flex: 1, flexDirection: "row", alignItems: "center", gap: 12 },
+  compactFavorite: { position: "absolute", top: 10, right: 10 },
   mapCardWidth: {
     width: 304,
   },

@@ -13,7 +13,7 @@
   - Profile, Traveler details, Currency (`USD`, `EUR`, `GBP`, `MAD`, `JPY`), Language (`en`, `fr`), Reduced Motion, Dark Mode, Notifications, and Help/Concierge info.
 
 ## 3. Verified Runtime & Stack
-- **Node.js**: `v24.20.0` (native TypeScript execution `process.features.typescript === 'strip'`, built-in `node:sqlite`, `node:test`, `node:http`, `node:crypto`).
+- **Node.js**: `v24.20.0` (native TypeScript execution `process.features.typescript === 'strip'`, `node:test`, `node:http`, `node:crypto`).
 - **Mobile Framework**: Expo SDK `~58.0.19`, React Native `0.88.0`, React `19.3.0` (`reactCompiler: true`, `typedRoutes: true`).
 - **Routing**: `expo-router` `~58.0.26`
   - iOS: `NativeTabs` (`expo-router/native-tabs`) + `expo-symbols`
@@ -23,3 +23,13 @@
   - Brand Identity: `assets/goWild (1080 x 600 px).png` (geometric 8-petal flower `#40B4F8` + bold sans wordmark).
   - UI Kit Baseline: Figma Community file `sim22KJgjq1zKePEhnJzdM` ("Grand Hotel - Hotel Booking App UI Kits").
 
+
+
+## Firebase migration (2026-11-05)
+
+The user requested Firestore instead of SQLite, Firebase email/Google authentication, and smoother maps. Firestore now owns server profiles, sessions, favorites, quotes and booking records. See `README/FIREBASE_SETUP.md` for external configuration. The mobile map uses native map SDKs; web uses Leaflet. Live LiteAPI payment checkout remains explicitly unavailable until the Payment SDK is integrated; Duffel balance reservations are labeled accurately.
+
+
+## Authoritative backend update — 2026-11-05
+
+The user replaced the earlier Node/Cloud Run plan with Firebase-managed Python Functions v2 in europe-west1. Use Firebase Auth directly, authenticated callable functions only, deny-all direct Firestore rules, Secret Manager supplier credentials, and sandbox-only reservations/payments. Public configuration for gowild-d3b29 was supplied and saved locally. No app design, navigation or map implementation changes are authorized for this migration. Earlier Node/Cloud Run/SQLite descriptions are historical.

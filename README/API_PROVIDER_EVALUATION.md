@@ -1,3 +1,5 @@
+> **Current implementation (2026-11-05):** Hotel adapters now run in Python Firebase Functions v2, accept sandbox credentials only, and use Firebase Secret Manager. See [managed setup](./FIREBASE_SETUP.md). Comparisons below are historical research; they do not enable production booking or payment.
+
 # README/API_PROVIDER_EVALUATION.md — Hotel Inventory & Booking Provider Research
 
 ## 1. Executive Summary & Selection
@@ -30,3 +32,8 @@ Following verification against official 2026 provider documentation, **goWild** 
    - **Provider Sandbox (`sand_...` / `duffel_test_...`)**: Marked `isSandbox: true` and badged `SANDBOX TEST RESERVATION` in receipts and My Trips.
    - **Development Fixtures (`development_fixtures`)**: Marked `isSandbox: true` (`providerId: 'development_fixtures'`) and badged `DEVELOPMENT SANDBOX — NOT A LIVE RESERVATION`. Disabled completely when `NODE_ENV=production`.
 
+
+
+## 2026-11-05 integration status
+
+Firestore/Firebase setup is documented in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md). LiteAPI sandbox reservations remain supported; production Payment SDK checkout is not implemented and is now explicitly disabled rather than treating an app return URL as checkout. Duffel Stays live reservations use the business balance for supported rates; they are not a hosted traveler payment flow. Traveler payment collection still requires a separate verified payment integration.

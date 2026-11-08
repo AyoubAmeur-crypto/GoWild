@@ -1,3 +1,4 @@
+import { GoogleSignInButton } from "../components/GoogleSignInButton";
 import React, { useState } from "react";
 import {
   View,
@@ -82,10 +83,11 @@ export const SignInScreen: React.FC = () => {
             Welcome Back
           </Text>
           <Text style={[styles.subtitle, { color: palette.subtext }]}>
-            Sign in to access your goWild reservations, saved stays, and
-            traveler preferences.
+            Sign in to access your trips and saved stays.
           </Text>
         </View>
+
+        <GoogleSignInButton />
 
         <View
           style={[

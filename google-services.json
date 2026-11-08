@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "713960465346",
+    "project_id": "gowild-d3b29",
+    "storage_bucket": "gowild-d3b29.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:713960465346:android:a8322a765bbfa3b166ac5b",
+        "android_client_info": {
+          "package_name": "com.gowild.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "713960465346-06l42vj4rqlvvbs17fck4nn9k4unb1i9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBuWqHqgDdLAfW1KYTrmju6gpz5a0DAncY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "713960465346-06l42vj4rqlvvbs17fck4nn9k4unb1i9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

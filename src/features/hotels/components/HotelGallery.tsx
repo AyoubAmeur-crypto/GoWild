@@ -29,7 +29,7 @@ export const HotelGallery: React.FC<HotelGalleryProps> = ({
 
   const safeImages =
     images.length > 0
-      ? images
+      ? images.slice(0, 10)
       : [
           {
             id: "fallback",

@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { Shadows } from "../../theme/tokens";
 import { useAppTheme } from "../../theme/useAppTheme";
+import { haptics } from "../../lib/haptics";
 
 interface PrimaryButtonProps {
   label: string;
@@ -59,11 +60,17 @@ export const PrimaryButton: React.FC<PrimaryButtonProps> = ({
     ghost: palette.text,
   };
 
+  const handlePress = () => {
+    if (disabled || loading) return;
+    haptics.medium();
+    onPress();
+  };
+
   return (
     <View>
       <Pressable
         testID={testID}
-        onPress={onPress}
+        onPress={handlePress}
         disabled={disabled || loading}
         accessibilityRole="button"
         accessibilityLabel={label}

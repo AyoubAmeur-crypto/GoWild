@@ -90,19 +90,19 @@ export const LightPalette: ThemePalette = {
 
 export const DarkPalette: ThemePalette = {
   isDark: true,
-  background: "#0F131D",
-  surface: "#171D2B",
-  surfaceMuted: "#1E2638",
-  surfaceIce: "rgba(64, 180, 248, 0.14)",
-  elevated: "#20293D",
-  text: "#F8FAFC",
-  subtext: "#A3B1C6",
-  muted: "#6E7D94",
-  border: "#28334A",
+  background: "#000000",
+  surface: "#0C0C0F",
+  surfaceMuted: "#141418",
+  surfaceIce: "#181820",
+  elevated: "#181820",
+  text: "#FEFEFE",
+  subtext: "#9CA4AB",
+  muted: "#66707A",
+  border: "#202028",
   primary: "#40B4F8",
   primaryStrong: "#2853AF",
   brandSky: "#40B4F8",
-  primaryTint: "rgba(64, 180, 248, 0.16)",
+  primaryTint: "#1C1C26",
   success: "#3FB698",
   successTint: "rgba(63, 182, 152, 0.16)",
   warning: "#F59E0B",
@@ -110,7 +110,7 @@ export const DarkPalette: ThemePalette = {
   danger: "#FB4B74",
   dangerTint: "rgba(251, 75, 116, 0.16)",
   ratingGold: "#FACC15",
-  cardOverlay: "rgba(9, 13, 22, 0.68)",
+  cardOverlay: "rgba(0, 0, 0, 0.78)",
 };
 
 export const Spacing = {

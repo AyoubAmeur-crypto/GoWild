@@ -14,3 +14,31 @@
 - [x] **T3.1** Implement Booking Review & Offer Revalidation (`src/app/booking/review.tsx`), Confirmation Receipt (`src/app/booking/confirmation/[id].tsx`), and My Trips + Cancellation (`src/app/(tabs)/bookings.tsx`).
 - [x] **T3.2** Implement Traveler Auth (`src/app/auth/sign-in.tsx`, `sign-up.tsx`), Favorites (`src/app/(tabs)/favorites.tsx`), Profile & Settings (`src/app/(tabs)/profile.tsx`), and Notifications (`src/app/notifications/index.tsx`).
 - [x] **T4.1** Write and execute automated unit + BFF/provider integration tests (`tests/*.test.ts` — 10/10 passing), run `npm run typecheck` (0 errors), run iOS & Android Metro production exports (both exit 0), and finalize docs.
+
+
+## Firebase and native map migration — 2026-11-05
+
+- [x] T5.1 Replace SQLite runtime with asynchronous Firestore persistence shared by both BFF entrypoints; keep memory explicit for isolated fixtures/tests.
+- [x] T5.2 Use Firebase email/Google identity verification and persistent revocable BFF sessions; add Google sign-in UI and native OAuth build settings.
+- [x] T5.3 Add durable reservation submission claims, owner/payload-safe retries, and honest live checkout capability labels.
+- [x] T5.4 Replace JS gesture/tile rendering with native mobile maps and Leaflet on web; add setup guide and restricted Maps key configuration.
+- [x] T5.5 Finish final emulator, platform export, and browser verification; record evidence and external setup limits.
+
+
+## Managed Python Firebase migration — 2026-11-05
+
+- [x] T6.1 Implement authenticated, secret-independent `testConnection` in europe-west1.
+- [x] T6.2 Replace BFF sessions/REST transport with Firebase Auth and httpsCallable; preserve UI/navigation/maps.
+- [x] T6.3 Implement Python user/favorites/hotel/reservation operations with private Firestore and per-supplier Secret Manager bindings.
+- [x] T6.4 Remove standalone Node deployment, REST proxy and embedded runtime; preserve SQLite backups.
+- [x] T6.5 Complete final SDK/emulator checks, platform exports, docs and UI/map preservation audit.
+
+## Android Firebase configuration audit — 2026-11-06
+
+- [x] T7.1 Configure the supplied Android JSON, verify package/project identity, and populate the existing public Web OAuth environment variable without changing auth architecture or UI.
+- [x] T7.2 Run required local checks and record Google Sign-In signing/OAuth gaps; distinguish local verification from real device/console verification. No deployment authorized or performed.
+
+## iOS Firebase configuration audit — 2026-11-06
+
+- [x] T8.1 Verify supplied iOS plist identity/OAuth values, configure its Expo file path and installed Google Sign-In plugin, and set existing iOS OAuth environment variable. Preserve bundle ID and Apple Maps.
+- [x] T8.2 Validate resolved native URL schemes, unchanged app/backend code, required local checks, and document remaining device/console verification. No deployment performed.

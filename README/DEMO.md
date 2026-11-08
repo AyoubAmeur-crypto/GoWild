@@ -1,3 +1,5 @@
+> **Current backend:** Sign in with Firebase and deploy the Python callable functions before following this UI walkthrough. Provider reservations are sandbox-only. Legacy Node/SQLite or embedded-gateway instructions below are superseded by [Firebase setup](./FIREBASE_SETUP.md).
+
 # README/DEMO.md — Reproducible End-to-End Walkthrough
 
 ## 1. Launch Services

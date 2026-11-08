@@ -5,6 +5,7 @@ import { useAppTheme } from "../../theme/useAppTheme";
 import { useFavoritesStore } from "../../stores/favoritesStore";
 import { useAuthStore } from "../../stores/useAuthStore";
 import { goWildApi } from "../../services/http/apiClient";
+import { haptics } from "../../lib/haptics";
 
 interface FavoriteHeartButtonProps {
   hotelId: string;
@@ -26,6 +27,7 @@ export const FavoriteHeartButton: React.FC<FavoriteHeartButtonProps> = ({
   const iconSize = isSmall ? 16 : 20;
 
   const handlePress = () => {
+    haptics.light();
     const nowFav = toggleFavoriteLocal(hotelId);
     if (token) {
       if (nowFav) {

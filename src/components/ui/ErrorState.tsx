@@ -1,9 +1,11 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { AlertCircle, WifiOff, Clock } from "lucide-react-native";
+import { useRouter } from "expo-router";
+import { AlertCircle, WifiOff, Clock, UserCheck } from "lucide-react-native";
 import { useAppTheme } from "../../theme/useAppTheme";
 import { PrimaryButton } from "./PrimaryButton";
 import { ApiClientError } from "../../services/http/apiClient";
+import { formatAuthError } from "../../lib/formatAuthError";
 
 interface ErrorStateProps {
   error: unknown;
@@ -18,28 +20,43 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
   onRetry,
   retryLabel = "Try Again",
 }) => {
+  const router = useRouter();
   const { palette } = useAppTheme();
 
   const apiErr = error instanceof ApiClientError ? error : null;
-  const isOffline = Boolean(apiErr?.isNetworkError);
-  const isExpired =
-    apiErr?.code === "OFFER_EXPIRED" || apiErr?.code === "OFFER_SOLD_OUT";
-
-  const resolvedTitle =
-    title ??
-    (isOffline
-      ? "Connection Unavailable"
-      : isExpired
-        ? "Rate Availability Updated"
-        : apiErr?.code === "PROVIDER_NOT_CONFIGURED"
-          ? "Hotel Supplier Credentials Needed"
-          : "Unable to Complete Request");
-
-  const resolvedMessage =
+  const rawMsg =
     apiErr?.message ??
     (error instanceof Error
       ? error.message
-      : "An unexpected issue occurred while communicating with the hotel service.");
+      : typeof error === "string"
+        ? error
+        : "");
+
+  const isOffline = Boolean(apiErr?.isNetworkError);
+  const isExpired =
+    apiErr?.code === "OFFER_EXPIRED" || apiErr?.code === "OFFER_SOLD_OUT";
+  const isUnauthorized =
+    apiErr?.statusCode === 401 ||
+    apiErr?.code === "UNAUTHORIZED" ||
+    rawMsg.includes("Sign in to access goWild");
+
+  const resolvedTitle =
+    title ??
+    (isUnauthorized
+      ? "Sign In Required"
+      : isOffline
+        ? "Connection Unavailable"
+        : isExpired
+          ? "Rate Availability Updated"
+          : apiErr?.code === "PROVIDER_NOT_CONFIGURED"
+            ? "Hotel Supplier Credentials Needed"
+            : "Unable to Complete Request");
+
+  const resolvedMessage = isUnauthorized
+    ? "Please sign in or create an account to access verified rates and reservations."
+    : formatAuthError(error || "An unexpected issue occurred.");
+
+  const showSignInAction = isUnauthorized || rawMsg.includes("auth/email-already-in-use");
 
   return (
     <View
@@ -47,7 +64,11 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         styles.card,
         {
           backgroundColor: palette.surface,
-          borderColor: isExpired ? palette.warning : palette.border,
+          borderColor: isExpired
+            ? palette.warning
+            : isUnauthorized
+              ? palette.primary
+              : palette.border,
         },
       ]}
     >
@@ -57,7 +78,9 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           {
             backgroundColor: isExpired
               ? palette.warningTint
-              : palette.dangerTint,
+              : isUnauthorized
+                ? palette.surfaceMuted
+                : palette.dangerTint,
           },
         ]}
       >
@@ -65,6 +88,8 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
           <WifiOff size={26} color={palette.danger} />
         ) : isExpired ? (
           <Clock size={26} color={palette.warning} />
+        ) : isUnauthorized ? (
+          <UserCheck size={26} color={palette.primary} />
         ) : (
           <AlertCircle size={26} color={palette.danger} />
         )}
@@ -75,7 +100,7 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         {resolvedMessage}
       </Text>
 
-      {apiErr?.code ? (
+      {apiErr?.code && !isUnauthorized ? (
         <View
           style={[
             styles.codeBadge,
@@ -88,7 +113,13 @@ export const ErrorState: React.FC<ErrorStateProps> = ({
         </View>
       ) : null}
 
-      {onRetry ? (
+      {showSignInAction ? (
+        <PrimaryButton
+          label="Sign In to goWild"
+          onPress={() => router.push("/auth/sign-in")}
+          style={styles.button}
+        />
+      ) : onRetry ? (
         <PrimaryButton
           label={retryLabel}
           onPress={onRetry}

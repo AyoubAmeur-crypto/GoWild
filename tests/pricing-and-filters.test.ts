@@ -11,7 +11,8 @@ import {
   AuthRegisterSchema,
   CreateBookingInputSchema,
 } from "../src/lib/validation.ts";
-import { ExplicitDevFixtureProvider } from "../server/src/providers/devFixtureProvider.ts";
+import fs from "node:fs";
+import type { Hotel } from "../src/types/domain.ts";
 
 test("calculateNights computes exact multi-night stay durations and clamps invalid ranges", () => {
   assert.equal(calculateNights("2026-12-10", "2026-12-14"), 4);
@@ -51,13 +52,7 @@ test("computePriceBreakdown itemizes room subtotal, taxes, property fees, and mu
 });
 
 test("filterAndSortHotels filters by city, price, star rating, propertyType, amenities, and sorts", async () => {
-  const fixture = new ExplicitDevFixtureProvider();
-  const baseSearch = await fixture.searchHotels({
-    checkIn: "2026-12-10",
-    checkOut: "2026-12-13",
-    occupancy: { rooms: 1, adults: 2, childrenAges: [] },
-    currency: "USD",
-  });
+  const baseSearch = { hotels: JSON.parse(fs.readFileSync("tests/fixtures/hotels.json", "utf8")) as Hotel[] };
 
   assert.ok(baseSearch.hotels.length >= 8);
 

@@ -42,3 +42,30 @@
   1. Built portable Web-standard API Gateway (`server/src/gateway.ts` + `server/src/storage.ts`) mounted directly inside Expo Router (`src/app/api/[...route]+api.ts`), so `npx expo start` and `npx eas deploy` serve `/api/*` natively with zero separate process required.
   2. Upgraded `src/lib/config.ts` (`expo-constants` `hostUri` LAN/Tunnel discovery) + `src/services/http/apiClient.ts` multi-origin gateway probing (`Custom Cloud URL` -> `EXPO_PUBLIC_API_BASE_URL` -> `Expo API Gateway :8081` -> `Standalone BFF :4010`) + `src/services/gateway/embeddedGateway.ts` (`AsyncStorage`-persisted Always-On Local Gateway failover when offline, never masking real upstream supplier errors).
   3. Upgraded `InteractiveHotelMap.tsx` to render true Web-Mercator OpenStreetMap street tiles (`tile.openstreetmap.org/{z}/{x}/{y}.png`) with pan/zoom gestures and quick city pills on `MapDiscoveryScreen.tsx`.
+
+
+## ISS-008: Firebase Admin ESM wrappers fail inside Metro API runtime
+- Observed 2026-11-05: web API requests failed with `Cannot read properties of undefined (reading 'Auth')` from `firebase-admin/lib/esm/auth/index.js`, despite successful exports and standalone Node tests.
+- Fixed: load Admin SDK through Node `createRequire`, leaving the SDK's module semantics and dependencies intact. Reverified browser API/map flow, web export, Node tests, and Firebase emulator test. Deployment requires a Node runtime and installed production dependencies.
+
+## ISS-009: External configuration and live payments
+- The Firebase project, OAuth clients, Android Maps restrictions and supplier credentials must be configured/verified externally. Google sign-in requires a native development build; device performance was not profiled.
+- Removed the LiteAPI adapter's fake production hosted checkout return link. Production booking is explicitly disabled until Payment SDK integration is complete. Duffel live balance booking is labeled as a business-funded reservation, without claiming traveler payment collection.
+- Existing SQLite data is preserved but not automatically migrated to Firebase identities.
+
+
+## ISS-010: Python Firestore emulator attempted Application Default Credentials lookup
+- Observed during the managed-functions migration: Firebase Admin Python's Firestore client attempted ADC even with a local Firestore emulator, causing DefaultCredentialsError on a machine without downloaded service-account credentials.
+- Fixed: functions/gowild/runtime.py uses an anonymous Firestore transport only when both FUNCTIONS_EMULATOR=true and FIRESTORE_EMULATOR_HOST are set. Callable user authentication is still required before DB access. Deployed functions retain their managed runtime identity. Emulator auth/rules/SDK/full sandbox lifecycle verification passed afterward. No private key was created.
+
+## ISS-011: Android Google OAuth signing registration remains unverified — 2026-11-06
+
+- The supplied google-services.json matches gowild-d3b29/com.gowild.app and contains a type-3 Web OAuth ID, but no type-1 Android OAuth client or SHA-1 certificate hash. SHA-256 registrations cannot be determined from this file. No project keystore/signing report exists locally; current console registration was not inspected.
+- Fixed the missing Expo Android JSON path and missing local EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID using the supplied ID. No auth implementation changes were needed. Verify actual development signing SHA-1 and SHA-256 in Firebase, confirm Google Auth is enabled, download a fresh JSON after changes, and test native consent in a rebuilt development app. iOS client ID/URL scheme also remain absent locally. See README/FIREBASE_PUBLIC_CONFIG.md.
+- The first required emulator invocation failed with ENOTFOUND registry.npmjs.org under sandbox restrictions. Retried with approved network/localhost access; the full demo-gowild emulator suite passed. No deployment occurred.
+
+iOS follow-up (2026-11-06): the newly supplied GoogleService-Info.plist resolves the missing iOS OAuth ID and callback scheme. Configured ios.googleServicesFile and the no-options Google Sign-In plugin; populated EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID. GOOGLE_IOS_URL_SCHEME is no longer needed. iOS live consent and hosted provider enablement remain unverified; Android fingerprint verification remains separate.
+
+## ISS-012: Intermittent Firestore emulator concurrency lock timeout — 2026-11-06
+
+During iOS configuration verification, the unchanged emulator suite failed at functions/tests/emulator_check.py:76 when concurrent booking claims exhausted five Firestore transaction attempts with Aborted: 409 Transaction lock timeout. TypeScript, all 15 unit tests, platform exports and iOS Expo config/OAuth scheme validation passed. A clean retry of the full demo-gowild emulator suite passed (exit 0) without changing backend/test code; retain this intermittent emulator contention evidence independently of the iOS OAuth setup.

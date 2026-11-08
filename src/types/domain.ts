@@ -243,7 +243,7 @@ export interface RevalidatedOffer {
   available: boolean;
   priceChanged: boolean;
   previousTotal?: number;
-  checkoutMode: "sandbox_instant" | "provider_hosted_checkout";
+  checkoutMode: "sandbox_instant" | "provider_hosted_checkout" | "supplier_balance" | "payment_unavailable";
   hostedCheckoutUrl?: string;
   expiresAt: string;
   capabilities: ProviderCapabilities;

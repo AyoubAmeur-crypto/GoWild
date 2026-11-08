@@ -21,16 +21,20 @@ import {
   MessageSquareQuote,
   Star,
   X,
+  ChevronDown,
 } from "lucide-react-native";
 import type { RoomOffer } from "../../../types/domain";
 import { useAppTheme } from "../../../theme/useAppTheme";
 import { useSearchStore } from "../../../stores/useSearchStore";
-import { formatDateRangeShort } from "../../../lib/pricing";
+import { useSettingsStore } from "../../../stores/useSettingsStore";
+import { useAuthStore } from "../../../stores/useAuthStore";
+import { formatDateRangeShort, formatMoney } from "../../../lib/pricing";
 import { FavoriteHeartButton } from "../../../components/ui/FavoriteHeartButton";
 import { RatingBadge } from "../../../components/ui/RatingBadge";
 import { AmenityChip } from "../../../components/ui/AmenityChip";
 import { PriceDisplay } from "../../../components/ui/PriceDisplay";
 import { PrimaryButton } from "../../../components/ui/PrimaryButton";
+import { SpringBottomSheet } from "../../../components/ui/SpringBottomSheet";
 import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
@@ -60,6 +64,9 @@ export const HotelDetailScreen: React.FC<HotelDetailScreenProps> = ({
   const setDates = useSearchStore((s) => s.setDates);
   const setOccupancy = useSearchStore((s) => s.setOccupancy);
 
+  const currency = useSettingsStore((s) => s.currency);
+  const user = useAuthStore((s) => s.user);
+
   const [expandedDesc, setExpandedDesc] = useState(false);
   const [datesModalOpen, setDatesModalOpen] = useState(false);
 
@@ -68,6 +75,8 @@ export const HotelDetailScreen: React.FC<HotelDetailScreenProps> = ({
 
   const hotel = detailQuery.data?.hotel;
   const offers = offersQuery.data?.offers ?? [];
+  const [showAllRooms, setShowAllRooms] = useState(false);
+  const displayedOffers = showAllRooms ? offers : offers.slice(0, 2);
   const leadOffer: RoomOffer | undefined = offers[0];
 
   const handleSelectOffer = (offer: RoomOffer) => {
@@ -219,7 +228,7 @@ export const HotelDetailScreen: React.FC<HotelDetailScreenProps> = ({
 
           {/* Location Map Preview Card */}
           <Pressable
-            onPress={() => router.push("/map")}
+            onPress={() => router.navigate("/map")}
             style={[
               styles.locationCard,
               {
@@ -354,13 +363,44 @@ export const HotelDetailScreen: React.FC<HotelDetailScreenProps> = ({
               />
             ) : (
               <View style={styles.offersGap}>
-                {offers.map((offer) => (
+                {displayedOffers.map((offer) => (
                   <RoomOfferCard
                     key={offer.offerId}
                     offer={offer}
                     onSelect={handleSelectOffer}
                   />
                 ))}
+
+                {offers.length > 2 ? (
+                  <Pressable
+                    onPress={() => setShowAllRooms((v) => !v)}
+                    style={[
+                      styles.showAllRoomsBtn,
+                      {
+                        backgroundColor: palette.surfaceMuted,
+                        borderColor: palette.border,
+                      },
+                    ]}
+                    accessibilityRole="button"
+                  >
+                    <Text
+                      style={[styles.showAllRoomsText, { color: palette.text }]}
+                    >
+                      {showAllRooms
+                        ? "Show Featured Rooms Only"
+                        : `Show All Available Rooms (${offers.length})`}
+                    </Text>
+                    <ChevronDown
+                      size={16}
+                      color={palette.primary}
+                      style={{
+                        transform: [
+                          { rotate: showAllRooms ? "180deg" : "0deg" },
+                        ],
+                      }}
+                    />
+                  </Pressable>
+                ) : null}
               </View>
             )}
           </View>
@@ -510,72 +550,54 @@ export const HotelDetailScreen: React.FC<HotelDetailScreenProps> = ({
         </View>
 
         <PrimaryButton
-          label={leadOffer ? "Reserve Best Room" : "View Rooms"}
+          label={
+            leadOffer
+              ? `Reserve Room · ${formatMoney(
+                  leadOffer.price.perNightBase,
+                  leadOffer.price.currency
+                )}`
+              : "Select Room"
+          }
           onPress={() => {
             if (leadOffer) {
               handleSelectOffer(leadOffer);
-            } else {
+            } else if (roomsOffsetY.current > 0) {
               scrollRef.current?.scrollTo({
-                y: roomsOffsetY.current,
+                y: roomsOffsetY.current - 20,
                 animated: true,
               });
+            } else {
+              setDatesModalOpen(true);
             }
           }}
           style={styles.stickyBtn}
         />
       </View>
 
-      {/* Dates & Guests Modal */}
-      <Modal
+      {/* Dates & Guests Smooth Spring Bottom Sheet */}
+      <SpringBottomSheet
         visible={datesModalOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setDatesModalOpen(false)}
+        title="Dates & Travelers"
+        onClose={() => setDatesModalOpen(false)}
+        footer={
+          <PrimaryButton
+            label="Refresh Room Rates"
+            onPress={() => setDatesModalOpen(false)}
+          />
+        }
       >
-        <View style={styles.modalBackdrop}>
-          <View
-            style={[
-              styles.modalSheet,
-              {
-                backgroundColor: palette.background,
-                paddingBottom: Math.max(insets.bottom + 14, 24),
-              },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: palette.text }]}>
-                Update Dates & Guests
-              </Text>
-              <Pressable
-                onPress={() => setDatesModalOpen(false)}
-                style={[
-                  styles.closeSmall,
-                  { backgroundColor: palette.surfaceMuted },
-                ]}
-              >
-                <X size={18} color={palette.text} />
-              </Pressable>
-            </View>
-            <ScrollView
-              contentContainerStyle={styles.modalScroll}
-              showsVerticalScrollIndicator={false}
-            >
-              <DateRangePicker
-                checkIn={checkIn}
-                checkOut={checkOut}
-                onChange={setDates}
-              />
-              <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
-            </ScrollView>
-            <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
-              <PrimaryButton
-                label="Refresh Room Rates"
-                onPress={() => setDatesModalOpen(false)}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <ScrollView
+          contentContainerStyle={styles.modalScroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <DateRangePicker
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onChange={setDates}
+          />
+          <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
+        </ScrollView>
+      </SpringBottomSheet>
     </View>
   );
 };
@@ -729,6 +751,20 @@ const styles = StyleSheet.create({
   },
   offersGap: {
     gap: 14,
+  },
+  showAllRoomsBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 1,
+    marginTop: 4,
+  },
+  showAllRoomsText: {
+    fontSize: 13,
+    fontWeight: "700",
   },
   policiesCard: {
     borderRadius: 18,

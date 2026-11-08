@@ -1,8 +1,10 @@
 import React from "react";
-import { View, Text, Pressable, StyleSheet } from "react-native";
+import { View, Text, StyleSheet } from "react-native";
 import { Minus, Plus } from "lucide-react-native";
 import type { Occupancy } from "../../../types/domain";
 import { useAppTheme } from "../../../theme/useAppTheme";
+import { triggerSelectionHaptic } from "../../../lib/haptics";
+import { HapticPressable } from "../../../components/ui/HapticPressable";
 
 interface GuestCounterProps {
   occupancy: Occupancy;
@@ -16,12 +18,14 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
   const { palette } = useAppTheme();
 
   const updateRooms = (delta: number) => {
+    triggerSelectionHaptic();
     const rooms = Math.max(1, Math.min(8, occupancy.rooms + delta));
     const adults = Math.max(rooms, occupancy.adults);
     onChange({ ...occupancy, rooms, adults });
   };
 
   const updateAdults = (delta: number) => {
+    triggerSelectionHaptic();
     const adults = Math.max(
       occupancy.rooms,
       Math.min(16, occupancy.adults + delta)
@@ -30,6 +34,7 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
   };
 
   const updateChildrenCount = (delta: number) => {
+    triggerSelectionHaptic();
     if (delta > 0 && occupancy.childrenAges.length < 6) {
       onChange({
         ...occupancy,
@@ -44,6 +49,7 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
   };
 
   const updateChildAge = (idx: number, delta: number) => {
+    triggerSelectionHaptic();
     const nextAges = occupancy.childrenAges.map((age, i) =>
       i === idx ? Math.max(0, Math.min(17, age + delta)) : age
     );
@@ -68,9 +74,10 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
       </View>
 
       <View style={styles.stepper}>
-        <Pressable
+        <HapticPressable
           onPress={onDec}
           disabled={minReached}
+          haptic="selection"
           style={[
             styles.stepBtn,
             {
@@ -83,11 +90,12 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
           accessibilityLabel={`Decrease ${title}`}
         >
           <Minus size={15} color={palette.text} />
-        </Pressable>
+        </HapticPressable>
         <Text style={[styles.stepVal, { color: palette.text }]}>{value}</Text>
-        <Pressable
+        <HapticPressable
           onPress={onInc}
           disabled={maxReached}
+          haptic="selection"
           style={[
             styles.stepBtn,
             {
@@ -100,7 +108,7 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
           accessibilityLabel={`Increase ${title}`}
         >
           <Plus size={15} color={palette.primary} />
-        </Pressable>
+        </HapticPressable>
       </View>
     </View>
   );
@@ -162,29 +170,35 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
                 Child {idx + 1} age
               </Text>
               <View style={styles.stepper}>
-                <Pressable
+                <HapticPressable
                   onPress={() => updateChildAge(idx, -1)}
                   disabled={age <= 0}
+                  haptic="selection"
                   style={[
                     styles.smallStepBtn,
                     { backgroundColor: palette.surface, borderColor: palette.border },
                   ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Decrease child ${idx + 1} age`}
                 >
                   <Minus size={13} color={palette.text} />
-                </Pressable>
+                </HapticPressable>
                 <Text style={[styles.ageVal, { color: palette.text }]}>
                   {age} yr
                 </Text>
-                <Pressable
+                <HapticPressable
                   onPress={() => updateChildAge(idx, 1)}
                   disabled={age >= 17}
+                  haptic="selection"
                   style={[
                     styles.smallStepBtn,
                     { backgroundColor: palette.surface, borderColor: palette.border },
                   ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Increase child ${idx + 1} age`}
                 >
                   <Plus size={13} color={palette.text} />
-                </Pressable>
+                </HapticPressable>
               </View>
             </View>
           ))}

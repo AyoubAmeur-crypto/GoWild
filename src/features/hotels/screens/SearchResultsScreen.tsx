@@ -26,6 +26,7 @@ import { Skeleton } from "../../../components/ui/Skeleton";
 import { EmptyState } from "../../../components/ui/EmptyState";
 import { ErrorState } from "../../../components/ui/ErrorState";
 import { PrimaryButton } from "../../../components/ui/PrimaryButton";
+import { SpringBottomSheet } from "../../../components/ui/SpringBottomSheet";
 import { useHotelSearch, usePlaceAutocomplete } from "../hooks/useHotels";
 import { HotelCard } from "../components/HotelCard";
 import { FilterSheet } from "../components/FilterSheet";
@@ -118,7 +119,7 @@ export const SearchResultsScreen: React.FC = () => {
           </Text>
 
           <Pressable
-            onPress={() => router.push("/map")}
+            onPress={() => router.navigate("/map")}
             style={[
               styles.mapSwitchBtn,
               { backgroundColor: palette.primaryTint },
@@ -323,62 +324,33 @@ export const SearchResultsScreen: React.FC = () => {
         onApply={setFilters}
       />
 
-      {/* Dates & Guests Modal */}
-      <Modal
+      {/* Dates & Guests Smooth Spring Bottom Sheet */}
+      <SpringBottomSheet
         visible={datesModalOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setDatesModalOpen(false)}
+        title="Dates & Travelers"
+        onClose={() => setDatesModalOpen(false)}
+        footer={
+          <PrimaryButton
+            label="Apply Dates & Guests"
+            onPress={() => {
+              recordRecentSearch();
+              setDatesModalOpen(false);
+            }}
+          />
+        }
       >
-        <View style={styles.modalBackdrop}>
-          <View
-            style={[
-              styles.modalSheet,
-              {
-                backgroundColor: palette.background,
-                paddingBottom: Math.max(insets.bottom + 14, 24),
-              },
-            ]}
-          >
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: palette.text }]}>
-                Dates & Travelers
-              </Text>
-              <Pressable
-                onPress={() => setDatesModalOpen(false)}
-                style={[
-                  styles.circleBtnSmall,
-                  { backgroundColor: palette.surfaceMuted },
-                ]}
-              >
-                <X size={18} color={palette.text} />
-              </Pressable>
-            </View>
-
-            <ScrollView
-              contentContainerStyle={styles.modalScroll}
-              showsVerticalScrollIndicator={false}
-            >
-              <DateRangePicker
-                checkIn={checkIn}
-                checkOut={checkOut}
-                onChange={setDates}
-              />
-              <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
-            </ScrollView>
-
-            <View style={styles.modalFooter}>
-              <PrimaryButton
-                label="Update Search"
-                onPress={() => {
-                  recordRecentSearch();
-                  setDatesModalOpen(false);
-                }}
-              />
-            </View>
-          </View>
-        </View>
-      </Modal>
+        <ScrollView
+          contentContainerStyle={styles.modalScroll}
+          showsVerticalScrollIndicator={false}
+        >
+          <DateRangePicker
+            checkIn={checkIn}
+            checkOut={checkOut}
+            onChange={setDates}
+          />
+          <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
+        </ScrollView>
+      </SpringBottomSheet>
     </View>
   );
 };

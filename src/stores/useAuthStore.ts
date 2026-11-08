@@ -22,7 +22,8 @@ export const useAuthStore = create<AuthState>()(
       clearSession: () => set({ token: null, user: null }),
     }),
     {
-      name: "gowild-auth-session-v1",
+      name: "gowild-firebase-profile-v2",
+      partialize: (state) => ({ user: state.user }),
       storage: createJSONStorage(() => AsyncStorage),
     }
   )

@@ -1,5 +1,13 @@
 # .agents/DECISIONS.md — Architecture Decision Log
 
+## Configuration note — iOS Firebase Google Sign-In (2026-11-06)
+
+Use the installed v17 Google Sign-In plugin's no-options Firebase mode, registered once in app.json. It reads REVERSED_CLIENT_ID from ios.googleServicesFile and configures the callback without an independent GOOGLE_IOS_URL_SCHEME environment variable. Populate the existing public iOS client ID variable from the plist; preserve Firebase JS initialization, auth code and Apple Maps. No native Firebase or iOS Google Maps SDK is added. This supersedes the earlier optional iOS URL scheme plugin setup.
+
+## Configuration note — Android Firebase registration (2026-11-06)
+
+Reference the supplied Android JSON from existing app.json, retain Firebase JS SDK initialization with the existing Web app identifiers, and set its public type-3 Web OAuth client ID through the existing environment variable. Expo's installed default Android prebuild plugins already handle the Google Services file and Gradle setup. Preserve the existing optional iOS URL scheme plugin and auth flow; do not introduce React Native Firebase or change architecture for this registration. Android signing registration and live Google consent remain external verification steps. No deployment authorized.
+
 ## ADR-001: Reject Amadeus Self-Service; Select LiteAPI v3.0 (Primary) + Duffel Stays v2 (Secondary)
 - **Date**: 2026-11-03
 - **Context**: Amadeus Self-Service Portal (`test.api.amadeus.com`, Hotel List v1, Hotel Search v3, Hotel Booking v2) was permanently decommissioned on **July 17, 2026**, leaving only enterprise-gated APIs. Booking.com Demand API and Expedia Rapid API also require pre-approved commercial partner contracts before sandbox credentials are issued.
@@ -31,3 +39,19 @@
   2. Discover candidate origins via `expo-constants` (`hostUri`) + runtime-configurable Cloud Gateway URL in Profile (`useSettingsStore.customApiGatewayUrl`).
   3. Provide an `AsyncStorage`-persisted `embeddedGateway` (`src/services/gateway/embeddedGatewayCore.ts`) strictly for network-unreachable/offline transport failover (unless `EXPO_PUBLIC_STRICT_REMOTE_GATEWAY=true`), while **never** falling back when a remote gateway returns an upstream provider or application error (`4xx`/`5xx` JSON envelope).
 
+
+
+## ADR — Firebase identity, Firestore persistence, native maps (2026-11-05)
+
+At the user's request, replace SQLite with Firestore behind asynchronous GatewayStorage and consolidate duplicate standalone/Expo server logic. Use Firebase Auth for email/Google identities and retain hashed, revocable BFF bearer sessions so supplier APIs remain server-owned. Deny direct client Firestore writes. Preserve old SQLite files without silently importing accounts or changing reservation owners.
+
+Use a Firestore transaction to claim each booking key before supplier submission; retain uncertain claims and their owner/input context for manual reconciliation. Never retry a supplier booking just because persistence or transport failed. Scope receipt replay to the owner and original payload.
+
+Move mobile pan/zoom and rendering into native Apple/Google Maps; use Leaflet on web with vector pins. Disable automatic embedded demo fallback unless explicitly opted in. Disable the previous fake LiteAPI live checkout link, and label Duffel balance-funded reservations accurately. Full traveler payment orchestration remains separate work.
+
+
+## ADR — Managed Firebase Python callable backend (2026-11-05)
+
+User explicitly superseded the Node/Cloud Run architecture. Deploy Python 3.12 Firebase Functions v2 through Firebase CLI in europe-west1; no separate infrastructure deployment or service-account JSON. Keep goWildApi facade and all UI/maps stable. Use Firebase SDK Auth persistence and verified callable UID for ownership; deny all direct Firestore client access.
+
+Separate public Firebase/OAuth configuration from supplier Secret Manager names. Deploy testConnection before suppliers; bind each provider secret only to its own callable. Enforce sandbox credential prefixes in code and retain durable idempotency/quote claims for ambiguous submissions. No production booking/payment bypass.

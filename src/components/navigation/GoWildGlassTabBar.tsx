@@ -19,6 +19,7 @@ import { Compass, Briefcase, Heart, User } from "lucide-react-native";
 import { BlurView } from "expo-blur";
 import { Motion } from "../../theme/motion";
 import { useAppTheme } from "../../theme/useAppTheme";
+import { haptics } from "../../lib/haptics";
 
 interface TabMeta {
   name: string;
@@ -168,6 +169,7 @@ export const GoWildGlassTabBar: React.FC<BottomTabBarProps> = ({
               });
 
               if (!isFocused && !event.defaultPrevented) {
+                haptics.selection();
                 navigateToTab(route.key);
               }
             };

@@ -88,7 +88,7 @@ export const MyTripsScreen: React.FC = () => {
           </View>
 
           <Pressable
-            onPress={() => router.push("/map")}
+            onPress={() => router.navigate("/map")}
             style={[
               styles.mapQuickBtn,
               {

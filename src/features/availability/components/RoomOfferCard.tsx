@@ -1,5 +1,5 @@
-import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Pressable, StyleSheet } from "react-native";
 import {
   BedDouble,
   Users,
@@ -8,6 +8,7 @@ import {
   AlertTriangle,
   Maximize2,
   Zap,
+  ChevronDown,
 } from "lucide-react-native";
 import type { RoomOffer } from "../../../types/domain";
 import { useAppTheme } from "../../../theme/useAppTheme";
@@ -26,6 +27,7 @@ export const RoomOfferCard: React.FC<RoomOfferCardProps> = ({
   loading = false,
 }) => {
   const { palette } = useAppTheme();
+  const [showDetails, setShowDetails] = useState(false);
   const isRefundable = offer.cancellationPolicy.refundableTag === "refundable";
 
   return (
@@ -58,10 +60,6 @@ export const RoomOfferCard: React.FC<RoomOfferCardProps> = ({
         ) : null}
       </View>
 
-      <Text style={[styles.description, { color: palette.subtext }]}>
-        {offer.description}
-      </Text>
-
       {/* Room Specs */}
       <View style={styles.specWrap}>
         <View
@@ -88,61 +86,73 @@ export const RoomOfferCard: React.FC<RoomOfferCardProps> = ({
             {offer.maxChildren > 0 ? `, ${offer.maxChildren} children` : ""}
           </Text>
         </View>
+      </View>
 
-        {offer.sizeSqm ? (
+      {/* Details Toggle Button */}
+      <Pressable
+        onPress={() => setShowDetails((v) => !v)}
+        style={styles.detailsToggle}
+        accessibilityRole="button"
+      >
+        <Text style={[styles.detailsToggleText, { color: palette.primary }]}>
+          {showDetails ? "Hide room details" : "Show room details & policies"}
+        </Text>
+        <ChevronDown
+          size={14}
+          color={palette.primary}
+          style={{ transform: [{ rotate: showDetails ? "180deg" : "0deg" }] }}
+        />
+      </Pressable>
+
+      {/* Expandable Room Info & Policies */}
+      {showDetails ? (
+        <View style={styles.expandedSection}>
+          {offer.description ? (
+            <Text style={[styles.description, { color: palette.subtext }]}>
+              {offer.description}
+            </Text>
+          ) : null}
+
           <View
             style={[
-              styles.specPill,
+              styles.policyBox,
               { backgroundColor: palette.surfaceMuted },
             ]}
           >
-            <Maximize2 size={13} color={palette.primary} />
-            <Text style={[styles.specText, { color: palette.text }]}>
-              {offer.sizeSqm} m²
-            </Text>
+            <View style={styles.policyItem}>
+              <Utensils size={14} color={palette.primary} />
+              <Text style={[styles.policyLabel, { color: palette.text }]}>
+                {offer.ratePlan.boardLabel}
+              </Text>
+            </View>
+
+            <View style={styles.policyItem}>
+              {isRefundable ? (
+                <ShieldCheck size={14} color={palette.success} />
+              ) : (
+                <AlertTriangle size={14} color={palette.warning} />
+              )}
+              <Text
+                style={[
+                  styles.policyLabel,
+                  { color: isRefundable ? palette.success : palette.subtext },
+                ]}
+              >
+                {offer.cancellationPolicy.summary}
+              </Text>
+            </View>
+
+            {offer.ratePlan.isInstantConfirmation ? (
+              <View style={styles.policyItem}>
+                <Zap size={14} color={palette.primary} />
+                <Text style={[styles.policyLabel, { color: palette.subtext }]}>
+                  Instant confirmation
+                </Text>
+              </View>
+            ) : null}
           </View>
-        ) : null}
-      </View>
-
-      {/* Rate Plan & Policy Badges */}
-      <View
-        style={[
-          styles.policyBox,
-          { backgroundColor: palette.surfaceMuted },
-        ]}
-      >
-        <View style={styles.policyItem}>
-          <Utensils size={14} color={palette.primary} />
-          <Text style={[styles.policyLabel, { color: palette.text }]}>
-            {offer.ratePlan.boardLabel}
-          </Text>
         </View>
-
-        <View style={styles.policyItem}>
-          {isRefundable ? (
-            <ShieldCheck size={14} color={palette.success} />
-          ) : (
-            <AlertTriangle size={14} color={palette.warning} />
-          )}
-          <Text
-            style={[
-              styles.policyLabel,
-              { color: isRefundable ? palette.success : palette.subtext },
-            ]}
-          >
-            {offer.cancellationPolicy.summary}
-          </Text>
-        </View>
-
-        {offer.ratePlan.isInstantConfirmation ? (
-          <View style={styles.policyItem}>
-            <Zap size={14} color={palette.primary} />
-            <Text style={[styles.policyLabel, { color: palette.subtext }]}>
-              Instant confirmation
-            </Text>
-          </View>
-        ) : null}
-      </View>
+      ) : null}
 
       {/* Footer Price + Action */}
       <View
@@ -222,6 +232,20 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 13,
     lineHeight: 19,
+  },
+  detailsToggle: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: 4,
+  },
+  detailsToggleText: {
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  expandedSection: {
+    gap: 10,
+    marginTop: 2,
   },
   specWrap: {
     flexDirection: "row",
