@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback, useEffect, useRef } from "react";
+import React, { useMemo, useCallback, useEffect, useRef, useState } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import {
   MonthList,
@@ -7,13 +7,18 @@ import {
   mergeTheme,
   defaultTheme,
   darkTheme,
-  type DateRange,
+  isSameCalendarDay,
   type CalendarTheme,
-  type PartialCalendarTheme,
 } from "@super-calendar/native/picker";
+import { Gesture, GestureDetector } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+} from "react-native-reanimated";
 import {
   addDays,
-  subDays,
   startOfDay,
   isBefore,
   differenceInCalendarDays,
@@ -30,6 +35,9 @@ export interface DateRangePickerProps {
   onChange: (checkIn: string, checkOut: string) => void;
 }
 
+type EndpointFocus = "auto" | "checkIn" | "checkOut";
+type DragAnchorMode = "fresh" | "adjustEnd" | "adjustStart";
+
 function parseIso(isoStr: string): Date {
   const [y, m, d] = isoStr.split("-").map(Number);
   if (!y || !m || !d) return startOfDay(new Date());
@@ -43,18 +51,22 @@ function toIso(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+const SCRUB_STEP_PX = 22;
+
 export const DateRangePicker: React.FC<DateRangePickerProps> = ({
   checkIn,
   checkOut,
   onChange,
 }) => {
-  const { palette, isDark } = useAppTheme();
+  const { palette, isDark, reducedMotion } = useAppTheme();
   const today = useMemo(() => startOfDay(new Date()), []);
 
   const parsedIn = useMemo(() => parseIso(checkIn), [checkIn]);
   const parsedOut = useMemo(() => parseIso(checkOut), [checkOut]);
 
-  // Controlled date-range hook from Super Calendar
+  const [focusedEndpoint, setFocusedEndpoint] = useState<EndpointFocus>("auto");
+
+  // Super Calendar date-range state hook
   const { range, onPressDate, selectRange, setRange } = useDateRange({
     minDate: today,
     initialRange: {
@@ -63,16 +75,23 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     },
   });
 
-  // Track previous range to synchronize with parent and trigger haptics
-  const prevRangeRef = useRef<DateRange | null>(range);
+  // Keep a ref to latest range so gestures and callbacks read current endpoints without stale closures
+  const rangeRef = useRef(range);
+  rangeRef.current = range;
+
+  // Track external prop changes without overwriting an in-progress single-endpoint selection
+  const lastCommittedRef = useRef<{ checkIn: string; checkOut: string }>({
+    checkIn,
+    checkOut,
+  });
 
   useEffect(() => {
-    // Sync external props change if range differs
-    if (
-      !range ||
-      toIso(range.start) !== checkIn ||
-      (range.end && toIso(range.end) !== checkOut)
-    ) {
+    const extChanged =
+      lastCommittedRef.current.checkIn !== checkIn ||
+      lastCommittedRef.current.checkOut !== checkOut;
+
+    if (extChanged) {
+      lastCommittedRef.current = { checkIn, checkOut };
       setRange({
         start: parsedIn,
         end: parsedOut,
@@ -80,96 +99,305 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
     }
   }, [checkIn, checkOut, parsedIn, parsedOut, setRange]);
 
-  // When user selects a range through the calendar
-  useEffect(() => {
-    if (!range) return;
+  const commitValidRange = useCallback(
+    (startDate: Date, endDate: Date, withConfirmHaptic: boolean) => {
+      const cleanStart = isBefore(startDate, today) ? today : startOfDay(startDate);
+      const cleanEnd =
+        differenceInCalendarDays(endDate, cleanStart) < 1
+          ? addDays(cleanStart, 1)
+          : startOfDay(endDate);
 
-    const prev = prevRangeRef.current;
-    const startChanged = !prev || toIso(prev.start) !== toIso(range.start);
-    const endChanged = !prev || (prev.end && range.end ? toIso(prev.end) !== toIso(range.end) : prev.end !== range.end);
+      const nextIn = toIso(cleanStart);
+      const nextOut = toIso(cleanEnd);
 
-    if (startChanged || endChanged) {
-      prevRangeRef.current = range;
+      selectRange(cleanStart, cleanEnd);
+      lastCommittedRef.current = { checkIn: nextIn, checkOut: nextOut };
 
-      if (range.start && range.end) {
+      if (withConfirmHaptic) {
         haptics.success();
-        onChange(toIso(range.start), toIso(range.end));
-      } else {
-        haptics.selection();
       }
-    }
-  }, [range, onChange]);
+      onChange(nextIn, nextOut);
+    },
+    [today, selectRange, onChange]
+  );
 
-  // Handle day press
+  // Tap handler on calendar days: supports choosing check-in/check-out AND shortening/extending endpoints without restarting
   const handlePressDay = useCallback(
-    (day: Date) => {
+    (rawDay: Date) => {
+      const day = startOfDay(rawDay);
       if (isBefore(day, today)) {
         haptics.warning();
         return;
       }
-      haptics.selection();
-      onPressDate(day);
+
+      const current = rangeRef.current;
+
+      // 1. If user explicitly tapped an existing range endpoint, focus that endpoint for adjustment
+      if (current?.start && current?.end) {
+        if (isSameCalendarDay(day, current.start)) {
+          haptics.selection();
+          setFocusedEndpoint("checkIn");
+          return;
+        }
+        if (isSameCalendarDay(day, current.end)) {
+          haptics.selection();
+          setFocusedEndpoint("checkOut");
+          return;
+        }
+      }
+
+      // 2. If user is adjusting Check-In endpoint directly
+      if (focusedEndpoint === "checkIn" && current?.start) {
+        const currentEnd = current.end ?? addDays(current.start, 1);
+        if (isBefore(day, currentEnd)) {
+          commitValidRange(day, currentEnd, true);
+          setFocusedEndpoint("auto");
+          return;
+        }
+        // Tapped on/after current checkout: shift start to day and wait for new checkout
+        haptics.selection();
+        setRange({ start: day, end: null });
+        setFocusedEndpoint("checkOut");
+        return;
+      }
+
+      // 3. If user is adjusting Check-Out endpoint directly
+      if (focusedEndpoint === "checkOut" && current?.start) {
+        if (differenceInCalendarDays(day, current.start) >= 1) {
+          commitValidRange(current.start, day, true);
+          setFocusedEndpoint("auto");
+          return;
+        }
+        // Tapped before current check-in: make tapped day the new check-in and keep previous start/end
+        commitValidRange(day, current.end ?? addDays(current.start, 1), true);
+        setFocusedEndpoint("auto");
+        return;
+      }
+
+      // 4. Standard Super Calendar `onPressDate` flow with smart range extension/shortening
+      if (!current || current.end !== null) {
+        // Begin selecting new check-in
+        haptics.selection();
+        onPressDate(day);
+        setFocusedEndpoint("auto");
+      } else {
+        // Completing an open range (check-in was chosen, now choosing check-out)
+        if (isSameCalendarDay(day, current.start)) {
+          commitValidRange(current.start, addDays(current.start, 1), true);
+        } else if (isBefore(day, current.start)) {
+          commitValidRange(day, current.start, true);
+        } else {
+          commitValidRange(current.start, day, true);
+        }
+      }
     },
-    [today, onPressDate]
+    [today, focusedEndpoint, commitValidRange, onPressDate, setRange]
   );
 
-  // Handle drag-to-select with Super Calendar
-  const handleSelectDrag = useCallback(
-    (start: Date, end: Date) => {
-      const validStart = isBefore(start, today) ? today : start;
-      if (isBefore(end, validStart)) return;
+  // Track active drag state to avoid redundant JS updates and support endpoint dragging
+  const dragSessionRef = useRef<{
+    originIso: string;
+    lastHoveredIso: string;
+    mode: DragAnchorMode;
+    anchorStart: Date;
+    anchorEnd: Date;
+  } | null>(null);
 
+  // Long-press + drag handler (`onSelectDrag` from Super Calendar `MonthList`)
+  const handleSelectDrag = useCallback(
+    (rawOrigin: Date, rawHovered: Date) => {
+      const origin = isBefore(rawOrigin, today) ? today : startOfDay(rawOrigin);
+      const hovered = isBefore(rawHovered, today) ? today : startOfDay(rawHovered);
+
+      const originIso = toIso(origin);
+      const hoveredIso = toIso(hovered);
+
+      // Initialize drag session on first frame of a new drag gesture
+      if (!dragSessionRef.current || dragSessionRef.current.originIso !== originIso) {
+        const current = rangeRef.current;
+        let mode: DragAnchorMode = "fresh";
+        const anchorStart = current?.start ?? origin;
+        const anchorEnd = current?.end ?? addDays(anchorStart, 1);
+
+        if (current?.start && current?.end) {
+          const distToEnd = Math.abs(differenceInCalendarDays(origin, current.end));
+          const distToStart = Math.abs(differenceInCalendarDays(origin, current.start));
+          if (distToEnd <= 1 && distToEnd <= distToStart) {
+            mode = "adjustEnd";
+          } else if (distToStart <= 1) {
+            mode = "adjustStart";
+          }
+        }
+
+        dragSessionRef.current = {
+          originIso,
+          lastHoveredIso: "",
+          mode,
+          anchorStart,
+          anchorEnd,
+        };
+      }
+
+      // Skip redundant JS state updates if finger is still on the same day cell
+      if (dragSessionRef.current.lastHoveredIso === hoveredIso) {
+        return;
+      }
+      dragSessionRef.current.lastHoveredIso = hoveredIso;
+
+      const { mode, anchorStart, anchorEnd } = dragSessionRef.current;
+      let nextStart: Date;
+      let nextEnd: Date;
+
+      if (mode === "adjustEnd") {
+        // Dragging the Check-Out endpoint to shorten or extend the stay
+        if (isBefore(hovered, anchorStart)) {
+          nextStart = hovered;
+          nextEnd = anchorStart;
+        } else if (isSameCalendarDay(hovered, anchorStart)) {
+          nextStart = anchorStart;
+          nextEnd = addDays(anchorStart, 1);
+        } else {
+          nextStart = anchorStart;
+          nextEnd = hovered;
+        }
+      } else if (mode === "adjustStart") {
+        // Dragging the Check-In endpoint to shorten or extend the stay
+        if (isBefore(hovered, anchorEnd)) {
+          nextStart = hovered;
+          nextEnd = anchorEnd;
+        } else if (isSameCalendarDay(hovered, anchorEnd)) {
+          nextStart = anchorEnd;
+          nextEnd = addDays(anchorEnd, 1);
+        } else {
+          nextStart = anchorStart;
+          nextEnd = hovered;
+        }
+      } else {
+        // Dragging a fresh range from `origin` to `hovered`
+        const [orderedStart, orderedEnd] =
+          origin.getTime() <= hovered.getTime() ? [origin, hovered] : [hovered, origin];
+        nextStart = orderedStart;
+        nextEnd = isSameCalendarDay(orderedStart, orderedEnd)
+          ? addDays(orderedStart, 1)
+          : orderedEnd;
+      }
+
+      // Light throttled haptic feedback as selection extends/shortens across days
       haptics.selection();
-      selectRange(validStart, end);
+      selectRange(nextStart, nextEnd);
+
+      const nextIn = toIso(nextStart);
+      const nextOut = toIso(nextEnd);
+      lastCommittedRef.current = { checkIn: nextIn, checkOut: nextOut };
+      onChange(nextIn, nextOut);
     },
-    [today, selectRange]
+    [today, selectRange, onChange]
   );
 
   // Endpoint adjusters: extend or shorten Check-In without restarting selection
   const handleAdjustCheckIn = useCallback(
     (deltaDays: number) => {
-      if (!range?.start) return;
-      const newStart = addDays(range.start, deltaDays);
+      const current = rangeRef.current;
+      if (!current?.start) return;
+      const newStart = addDays(current.start, deltaDays);
 
       if (isBefore(newStart, today)) {
         haptics.warning();
         return;
       }
 
-      const currentEnd = range.end || addDays(range.start, 1);
-      if (differenceInCalendarDays(currentEnd, newStart) < 1) {
-        // Pushing checkout forward by 1 night if checkin reaches it
-        const pushedEnd = addDays(newStart, 1);
-        haptics.selection(true);
-        selectRange(newStart, pushedEnd);
-        onChange(toIso(newStart), toIso(pushedEnd));
-      } else {
-        haptics.selection(true);
-        selectRange(newStart, currentEnd);
-        onChange(toIso(newStart), toIso(currentEnd));
-      }
+      const currentEnd = current.end || addDays(current.start, 1);
+      const nextEnd =
+        differenceInCalendarDays(currentEnd, newStart) < 1
+          ? addDays(newStart, 1)
+          : currentEnd;
+
+      haptics.selection();
+      commitValidRange(newStart, nextEnd, false);
     },
-    [range, today, selectRange, onChange]
+    [today, commitValidRange]
   );
 
   // Endpoint adjusters: extend or shorten Check-Out without restarting selection
   const handleAdjustCheckOut = useCallback(
     (deltaDays: number) => {
-      if (!range?.start) return;
-      const currentEnd = range.end || addDays(range.start, 1);
+      const current = rangeRef.current;
+      if (!current?.start) return;
+      const currentEnd = current.end || addDays(current.start, 1);
       const newEnd = addDays(currentEnd, deltaDays);
 
-      if (differenceInCalendarDays(newEnd, range.start) < 1) {
+      if (differenceInCalendarDays(newEnd, current.start) < 1) {
         haptics.warning();
         return;
       }
 
-      haptics.selection(true);
-      selectRange(range.start, newEnd);
-      onChange(toIso(range.start), toIso(newEnd));
+      haptics.selection();
+      commitValidRange(current.start, newEnd, false);
     },
-    [range, selectRange, onChange]
+    [commitValidRange]
   );
+
+  // UI-thread horizontal scrub gestures on Check-In and Check-Out cards
+  const checkInScale = useSharedValue(1);
+  const checkOutScale = useSharedValue(1);
+  const checkInScrubStep = useSharedValue(0);
+  const checkOutScrubStep = useSharedValue(0);
+
+  const checkInPanGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-8, 8])
+        .onBegin(() => {
+          checkInScrubStep.value = 0;
+          if (!reducedMotion) {
+            checkInScale.value = withSpring(1.03, { damping: 20, stiffness: 300 });
+          }
+        })
+        .onUpdate((event) => {
+          const steps = Math.trunc(event.translationX / SCRUB_STEP_PX);
+          const delta = steps - checkInScrubStep.value;
+          if (delta !== 0) {
+            checkInScrubStep.value = steps;
+            runOnJS(handleAdjustCheckIn)(delta);
+          }
+        })
+        .onFinalize(() => {
+          checkInScale.value = withSpring(1, { damping: 20, stiffness: 300 });
+        }),
+    [checkInScrubStep, checkInScale, reducedMotion, handleAdjustCheckIn]
+  );
+
+  const checkOutPanGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetX([-8, 8])
+        .onBegin(() => {
+          checkOutScrubStep.value = 0;
+          if (!reducedMotion) {
+            checkOutScale.value = withSpring(1.03, { damping: 20, stiffness: 300 });
+          }
+        })
+        .onUpdate((event) => {
+          const steps = Math.trunc(event.translationX / SCRUB_STEP_PX);
+          const delta = steps - checkOutScrubStep.value;
+          if (delta !== 0) {
+            checkOutScrubStep.value = steps;
+            runOnJS(handleAdjustCheckOut)(delta);
+          }
+        })
+        .onFinalize(() => {
+          checkOutScale.value = withSpring(1, { damping: 20, stiffness: 300 });
+        }),
+    [checkOutScrubStep, checkOutScale, reducedMotion, handleAdjustCheckOut]
+  );
+
+  const checkInCardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkInScale.value }],
+  }));
+
+  const checkOutCardStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: checkOutScale.value }],
+  }));
 
   // Total nights calculation
   const totalNights = useMemo(() => {
@@ -199,7 +427,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
       text: {
         ...base.text,
         monthTitle: {
-          fontSize: 16,
+          fontSize: 15,
           fontWeight: "700",
           color: isDark ? "#FFFFFF" : "#171725",
         },
@@ -214,7 +442,7 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
         },
       },
       todayBadgeRadius: 18,
-      rangeBandHeight: 38,
+      rangeBandHeight: 36,
     });
   }, [isDark, palette]);
 
@@ -230,41 +458,74 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
           },
         ]}
       >
-        {/* Check-in Endpoint Card */}
-        <View style={styles.endpointCard}>
-          <Text style={[styles.endpointLabel, { color: palette.subtext }]}>
-            CHECK-IN
-          </Text>
-          <Text style={[styles.endpointDate, { color: palette.text }]}>
-            {range?.start ? format(range.start, "EEE, MMM d") : "Select date"}
-          </Text>
-
-          <View style={styles.stepperRow}>
+        {/* Check-in Endpoint Card (Tap to focus or slide left/right to scrub) */}
+        <GestureDetector gesture={checkInPanGesture}>
+          <Animated.View
+            style={[
+              styles.endpointCard,
+              focusedEndpoint === "checkIn" && {
+                borderColor: palette.primary,
+                backgroundColor: isDark ? "rgba(40, 83, 175, 0.16)" : "#E8F2FF",
+              },
+              checkInCardStyle,
+            ]}
+          >
             <HapticPressable
-              onPress={() => handleAdjustCheckIn(-1)}
               haptic="selection"
-              style={[
-                styles.stepperBtn,
-                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
-              ]}
-              accessibilityLabel="Decrease check-in by one day"
+              activeScale={0.98}
+              onPress={() =>
+                setFocusedEndpoint((prev) =>
+                  prev === "checkIn" ? "auto" : "checkIn"
+                )
+              }
+              style={styles.endpointHeaderBtn}
+              accessibilityLabel="Focus check-in date adjustment"
             >
-              <Minus size={14} color={palette.text} />
+              <Text
+                style={[
+                  styles.endpointLabel,
+                  {
+                    color:
+                      focusedEndpoint === "checkIn"
+                        ? palette.primary
+                        : palette.subtext,
+                  },
+                ]}
+              >
+                CHECK-IN
+              </Text>
+              <Text style={[styles.endpointDate, { color: palette.text }]}>
+                {range?.start ? format(range.start, "EEE, MMM d") : "Select date"}
+              </Text>
             </HapticPressable>
 
-            <HapticPressable
-              onPress={() => handleAdjustCheckIn(1)}
-              haptic="selection"
-              style={[
-                styles.stepperBtn,
-                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
-              ]}
-              accessibilityLabel="Increase check-in by one day"
-            >
-              <Plus size={14} color={palette.text} />
-            </HapticPressable>
-          </View>
-        </View>
+            <View style={styles.stepperRow}>
+              <HapticPressable
+                onPress={() => handleAdjustCheckIn(-1)}
+                haptic="selection"
+                style={[
+                  styles.stepperBtn,
+                  { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
+                ]}
+                accessibilityLabel="Decrease check-in by one day"
+              >
+                <Minus size={13} color={palette.text} />
+              </HapticPressable>
+
+              <HapticPressable
+                onPress={() => handleAdjustCheckIn(1)}
+                haptic="selection"
+                style={[
+                  styles.stepperBtn,
+                  { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
+                ]}
+                accessibilityLabel="Increase check-in by one day"
+              >
+                <Plus size={13} color={palette.text} />
+              </HapticPressable>
+            </View>
+          </Animated.View>
+        </GestureDetector>
 
         {/* Center Nights Pill */}
         <View style={styles.centerPillWrap}>
@@ -279,53 +540,86 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
               {totalNights} {totalNights === 1 ? "night" : "nights"}
             </Text>
           </View>
-          <ArrowRight size={14} color={palette.subtext} />
+          <ArrowRight size={13} color={palette.subtext} />
         </View>
 
-        {/* Check-out Endpoint Card */}
-        <View style={styles.endpointCard}>
-          <Text style={[styles.endpointLabel, { color: palette.subtext }]}>
-            CHECK-OUT
-          </Text>
-          <Text style={[styles.endpointDate, { color: palette.text }]}>
-            {range?.end
-              ? format(range.end, "EEE, MMM d")
-              : range?.start
-              ? format(addDays(range.start, 1), "EEE, MMM d")
-              : "Select date"}
-          </Text>
-
-          <View style={styles.stepperRow}>
+        {/* Check-out Endpoint Card (Tap to focus or slide left/right to scrub) */}
+        <GestureDetector gesture={checkOutPanGesture}>
+          <Animated.View
+            style={[
+              styles.endpointCard,
+              focusedEndpoint === "checkOut" && {
+                borderColor: palette.primary,
+                backgroundColor: isDark ? "rgba(40, 83, 175, 0.16)" : "#E8F2FF",
+              },
+              checkOutCardStyle,
+            ]}
+          >
             <HapticPressable
-              onPress={() => handleAdjustCheckOut(-1)}
               haptic="selection"
-              style={[
-                styles.stepperBtn,
-                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
-              ]}
-              accessibilityLabel="Decrease check-out by one day"
+              activeScale={0.98}
+              onPress={() =>
+                setFocusedEndpoint((prev) =>
+                  prev === "checkOut" ? "auto" : "checkOut"
+                )
+              }
+              style={styles.endpointHeaderBtn}
+              accessibilityLabel="Focus check-out date adjustment"
             >
-              <Minus size={14} color={palette.text} />
+              <Text
+                style={[
+                  styles.endpointLabel,
+                  {
+                    color:
+                      focusedEndpoint === "checkOut"
+                        ? palette.primary
+                        : palette.subtext,
+                  },
+                ]}
+              >
+                CHECK-OUT
+              </Text>
+              <Text style={[styles.endpointDate, { color: palette.text }]}>
+                {range?.end
+                  ? format(range.end, "EEE, MMM d")
+                  : range?.start
+                  ? format(addDays(range.start, 1), "EEE, MMM d")
+                  : "Select date"}
+              </Text>
             </HapticPressable>
 
-            <HapticPressable
-              onPress={() => handleAdjustCheckOut(1)}
-              haptic="selection"
-              style={[
-                styles.stepperBtn,
-                { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
-              ]}
-              accessibilityLabel="Increase check-out by one day"
-            >
-              <Plus size={14} color={palette.text} />
-            </HapticPressable>
-          </View>
-        </View>
+            <View style={styles.stepperRow}>
+              <HapticPressable
+                onPress={() => handleAdjustCheckOut(-1)}
+                haptic="selection"
+                style={[
+                  styles.stepperBtn,
+                  { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
+                ]}
+                accessibilityLabel="Decrease check-out by one day"
+              >
+                <Minus size={13} color={palette.text} />
+              </HapticPressable>
+
+              <HapticPressable
+                onPress={() => handleAdjustCheckOut(1)}
+                haptic="selection"
+                style={[
+                  styles.stepperBtn,
+                  { backgroundColor: isDark ? "#27272A" : "#FFFFFF" },
+                ]}
+                accessibilityLabel="Increase check-out by one day"
+              >
+                <Plus size={13} color={palette.text} />
+              </HapticPressable>
+            </View>
+          </Animated.View>
+        </GestureDetector>
       </View>
 
       {/* Drag & Select Tip */}
       <Text style={[styles.gestureTip, { color: palette.subtext }]}>
-        Tap to pick dates, or long-press & drag across days to extend.
+        Tap or long-press & drag across dates, or slide check-in/out left & right.
       </Text>
 
       {/* 2. Super Calendar MonthList */}
@@ -336,8 +630,8 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
             selectedRange={range ?? undefined}
             minDate={today}
             weekStartsOn={0}
-            weekRowHeight={46}
-            monthHeaderHeight={40}
+            weekRowHeight={42}
+            monthHeaderHeight={36}
             fillCellOnSelection={false}
             onPressDay={handlePressDay}
             onSelectDrag={handleSelectDrag}
@@ -351,21 +645,30 @@ export const DateRangePicker: React.FC<DateRangePickerProps> = ({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    gap: 12,
+    gap: 8,
   },
   summaryCard: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    padding: 12,
+    padding: 8,
     borderRadius: 18,
     borderWidth: 1,
-    gap: 8,
+    gap: 6,
   },
   endpointCard: {
     flex: 1,
     alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "transparent",
     gap: 4,
+  },
+  endpointHeaderBtn: {
+    alignItems: "center",
+    gap: 2,
   },
   endpointLabel: {
     fontSize: 10,
@@ -373,19 +676,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   endpointDate: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "700",
   },
   stepperRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    paddingTop: 4,
+    paddingTop: 2,
   },
   stepperBtn: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 26,
+    height: 26,
+    borderRadius: 13,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000000",
@@ -396,7 +699,7 @@ const styles = StyleSheet.create({
   },
   centerPillWrap: {
     alignItems: "center",
-    gap: 4,
+    gap: 3,
   },
   nightsBadge: {
     flexDirection: "row",
@@ -411,12 +714,12 @@ const styles = StyleSheet.create({
     fontWeight: "700",
   },
   gestureTip: {
-    fontSize: 12,
+    fontSize: 11,
     textAlign: "center",
-    paddingHorizontal: 16,
+    paddingHorizontal: 12,
   },
   calendarWrap: {
-    height: 380,
+    height: 295,
     width: "100%",
     borderRadius: 16,
     overflow: "hidden",

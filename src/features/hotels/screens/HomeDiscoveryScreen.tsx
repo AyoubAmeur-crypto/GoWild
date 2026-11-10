@@ -469,17 +469,14 @@ export const HomeDiscoveryScreen: React.FC = () => {
           />
         }
       >
-        <ScrollView
-          contentContainerStyle={{ gap: 14, paddingBottom: 10 }}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={{ gap: 12, paddingHorizontal: 20, paddingBottom: 10 }}>
           <DateRangePicker
             checkIn={checkIn}
             checkOut={checkOut}
             onChange={setDates}
           />
           <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
-        </ScrollView>
+        </View>
       </SpringBottomSheet>
     </View>
   );

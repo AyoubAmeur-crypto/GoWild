@@ -2,6 +2,7 @@ import "../global.css";
 import { observeFirebaseSession } from "../services/firebase/session";
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Platform } from "react-native";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -27,37 +28,39 @@ export default function RootLayout() {
   }, [reducedMotion]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <StatusBar style={showLaunchSplash ? "dark" : isDark ? "light" : "dark"} />
-      <View style={styles.root}>
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            animation: reducedMotion ? "none" : "default",
-            contentStyle: { backgroundColor: palette.background },
-            gestureEnabled: true,
-            fullScreenGestureEnabled: Platform.OS === "ios",
-          }}
-        >
-          <Stack.Screen name="index" />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="search/index" />
-          <Stack.Screen name="map/index" />
-          <Stack.Screen name="hotel/[id]" />
-          <Stack.Screen name="booking/review" />
-          <Stack.Screen name="booking/confirmation/[id]" />
-          <Stack.Screen name="auth/sign-in" />
-          <Stack.Screen name="auth/sign-up" />
-          <Stack.Screen name="notifications/index" />
-        </Stack>
+    <GestureHandlerRootView style={styles.root}>
+      <QueryClientProvider client={queryClient}>
+        <StatusBar style={showLaunchSplash ? "dark" : isDark ? "light" : "dark"} />
+        <View style={styles.root}>
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              animation: reducedMotion ? "none" : "default",
+              contentStyle: { backgroundColor: palette.background },
+              gestureEnabled: true,
+              fullScreenGestureEnabled: Platform.OS === "ios",
+            }}
+          >
+            <Stack.Screen name="index" />
+            <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="search/index" />
+            <Stack.Screen name="map/index" />
+            <Stack.Screen name="hotel/[id]" />
+            <Stack.Screen name="booking/review" />
+            <Stack.Screen name="booking/confirmation/[id]" />
+            <Stack.Screen name="auth/sign-in" />
+            <Stack.Screen name="auth/sign-up" />
+            <Stack.Screen name="notifications/index" />
+          </Stack>
 
-        {showLaunchSplash ? (
-          <View style={styles.launchSplash} pointerEvents="auto">
-            <BrandLogo variant="full" tone="light" height={62} />
-          </View>
-        ) : null}
-      </View>
-    </QueryClientProvider>
+          {showLaunchSplash ? (
+            <View style={styles.launchSplash} pointerEvents="auto">
+              <BrandLogo variant="full" tone="light" height={62} />
+            </View>
+          ) : null}
+        </View>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }
 

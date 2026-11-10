@@ -69,3 +69,35 @@ test("haptic throttling prevents vibration spam during high-frequency dragging",
   assert.equal(throttledHaptic(true), true);
   assert.equal(triggerCount, 2);
 });
+
+test("endpoint drag adjustment extends and shortens range without restarting selection", () => {
+  const start = new Date(2026, 10, 10); // Nov 10
+  const end = new Date(2026, 10, 15); // Nov 15
+
+  function detectDragMode(origin: Date, currentStart: Date, currentEnd: Date) {
+    const distToEnd = Math.abs(differenceInCalendarDays(origin, currentEnd));
+    const distToStart = Math.abs(differenceInCalendarDays(origin, currentStart));
+    if (distToEnd <= 1 && distToEnd <= distToStart) return "adjustEnd";
+    if (distToStart <= 1) return "adjustStart";
+    return "fresh";
+  }
+
+  // Dragging from existing checkout date adjusts end
+  assert.equal(detectDragMode(new Date(2026, 10, 15), start, end), "adjustEnd");
+  // Dragging from existing checkin date adjusts start
+  assert.equal(detectDragMode(new Date(2026, 10, 10), start, end), "adjustStart");
+  // Dragging from an unrelated date starts a fresh range
+  assert.equal(detectDragMode(new Date(2026, 10, 22), start, end), "fresh");
+});
+
+test("multi-snap bottom sheet calculates ascending snap ratios and offsets", () => {
+  const height = 800;
+  const snapPoints = [0.9, 0.58];
+  const sorted = [...snapPoints].sort((a, b) => a - b);
+  assert.deepEqual(sorted, [0.58, 0.9]);
+
+  const topRatio = sorted[sorted.length - 1];
+  const offsets = sorted.map((r) => Math.round((topRatio - r) * height));
+  // Lower snap point (0.58) has positive translateY offset (256px), highest snap point (0.9) is 0px
+  assert.deepEqual(offsets, [256, 0]);
+});

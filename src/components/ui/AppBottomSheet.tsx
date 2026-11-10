@@ -1,17 +1,29 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import {
   Modal,
   View,
   Text,
   Pressable,
-  Animated,
   StyleSheet,
   useWindowDimensions,
   StyleProp,
   ViewStyle,
-  Easing,
-  PanResponder,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  runOnJS,
+  Easing,
+} from "react-native-reanimated";
+import {
+  Gesture,
+  GestureDetector,
+  GestureHandlerRootView,
+} from "react-native-gesture-handler";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X } from "lucide-react-native";
 import { useAppTheme } from "../../theme/useAppTheme";
@@ -33,7 +45,20 @@ export interface AppBottomSheetProps {
   dismissOnBackdropPress?: boolean;
   headerRight?: React.ReactNode;
   maxHeightRatio?: number;
+  /**
+   * Optional snap points as ratios of screen height (e.g. `[0.55, 0.92]`).
+   * Supports dragging upward to expand and downward to collapse or dismiss.
+   */
+  snapPoints?: number[];
+  initialSnapIndex?: number;
 }
+
+const SPRING_CONFIG = {
+  damping: 26,
+  stiffness: 280,
+  mass: 0.85,
+  overshootClamping: false,
+};
 
 export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   visible,
@@ -49,125 +74,205 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
   dismissOnBackdropPress = true,
   headerRight,
   maxHeightRatio = 0.92,
+  snapPoints,
+  initialSnapIndex,
 }) => {
-  const { height, width } = useWindowDimensions();
+  const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const { palette, isDark } = useAppTheme();
   const reducedMotion = useSettingsStore((s) => s.reducedMotion);
 
   const [modalRendered, setModalRendered] = useState(visible);
   const [isDragging, setIsDragging] = useState(false);
-  const translateY = useRef(new Animated.Value(height)).current;
-  const currentDragY = useRef(0);
 
-  // Animate sheet presentation and dismissal
+  // Normalized ascending snap ratios (e.g., [0.55, 0.92])
+  const resolvedSnapRatios = useMemo(() => {
+    if (snapPoints && snapPoints.length > 0) {
+      return [...snapPoints].sort((a, b) => a - b);
+    }
+    return [maxHeightRatio];
+  }, [snapPoints, maxHeightRatio]);
+
+  const topRatio = resolvedSnapRatios[resolvedSnapRatios.length - 1] ?? maxHeightRatio;
+  const maxSheetHeight = height * topRatio;
+
+  // Each snap point's translateY offset relative to the fully expanded top position (0 = fully expanded)
+  const snapOffsets = useMemo(
+    () => resolvedSnapRatios.map((r) => Math.max(0, (topRatio - r) * height)),
+    [resolvedSnapRatios, topRatio, height]
+  );
+
+  const defaultSnapIdx =
+    initialSnapIndex !== undefined
+      ? Math.min(Math.max(0, initialSnapIndex), snapOffsets.length - 1)
+      : snapOffsets.length - 1;
+
+  const translateY = useSharedValue(height);
+  const dragStartY = useSharedValue(0);
+  const activeSnapIdx = useSharedValue(defaultSnapIdx);
+
+  const finishClose = useCallback(() => {
+    setModalRendered(false);
+    onClose();
+  }, [onClose]);
+
+  const triggerDismissHaptic = useCallback(() => {
+    haptics.light();
+  }, []);
+
+  const triggerSnapHaptic = useCallback(() => {
+    haptics.selection();
+  }, []);
+
+  // Animate sheet presentation and dismissal on `visible` change
   useEffect(() => {
+    const initialOffset = snapOffsets[defaultSnapIdx] ?? 0;
     if (visible) {
       setModalRendered(true);
-      translateY.setValue(height);
+      activeSnapIdx.value = defaultSnapIdx;
+      translateY.value = height;
       if (reducedMotion) {
-        translateY.setValue(0);
+        translateY.value = initialOffset;
       } else {
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          damping: 28,
-          stiffness: 260,
-          mass: 0.85,
-        }).start();
+        translateY.value = withSpring(initialOffset, SPRING_CONFIG);
       }
-    } else {
+    } else if (modalRendered) {
       if (reducedMotion) {
         setModalRendered(false);
       } else {
-        Animated.timing(translateY, {
-          toValue: height,
-          duration: 220,
-          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-          useNativeDriver: true,
-        }).start(({ finished }) => {
-          if (finished) {
-            setModalRendered(false);
+        translateY.value = withTiming(
+          height,
+          {
+            duration: 210,
+            easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+          },
+          (finished) => {
+            if (finished) {
+              runOnJS(setModalRendered)(false);
+            }
           }
-        });
+        );
       }
     }
-  }, [visible, height, translateY, reducedMotion]);
+  }, [visible, height, reducedMotion, defaultSnapIdx, snapOffsets, translateY, activeSnapIdx, modalRendered]);
 
-  // Smooth dismiss with animation
-  const animateDismiss = () => {
+  // Smooth programmatic dismiss
+  const animateDismiss = useCallback(() => {
     haptics.light();
     if (reducedMotion) {
       onClose();
     } else {
-      Animated.timing(translateY, {
-        toValue: height,
-        duration: 200,
-        easing: Easing.bezier(0.25, 0.1, 0.25, 1),
-        useNativeDriver: true,
-      }).start(({ finished }) => {
-        if (finished) {
-          onClose();
+      translateY.value = withTiming(
+        height,
+        {
+          duration: 200,
+          easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+        },
+        (finished) => {
+          if (finished) {
+            runOnJS(finishClose)();
+          }
         }
-      });
+      );
     }
-  };
+  }, [reducedMotion, height, onClose, finishClose, translateY]);
 
-  // Interactive PanResponder on handle & header
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dy) > 4;
-      },
-      onPanResponderGrant: () => {
-        setIsDragging(true);
-        haptics.selection();
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const dy = gestureState.dy;
-        currentDragY.current = dy;
-        if (dy > 0) {
-          // Linear downward tracking
-          translateY.setValue(dy);
-        } else {
-          // Rubberband resistance when pulling upward past top
-          translateY.setValue(dy * 0.2);
-        }
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        setIsDragging(false);
-        const { dy, vy } = gestureState;
+  // UI-thread Pan Gesture on top handle & header
+  const headerPanGesture = useMemo(
+    () =>
+      Gesture.Pan()
+        .activeOffsetY([-4, 4])
+        .onBegin(() => {
+          dragStartY.value = translateY.value;
+          runOnJS(setIsDragging)(true);
+          runOnJS(triggerSnapHaptic)();
+        })
+        .onUpdate((event) => {
+          const rawY = dragStartY.value + event.translationY;
+          if (rawY < 0) {
+            // Rubberband resistance when pulling upward above highest snap point
+            translateY.value = rawY * 0.22;
+          } else {
+            translateY.value = rawY;
+          }
+        })
+        .onEnd((event) => {
+          runOnJS(setIsDragging)(false);
+          const currentY = translateY.value;
+          const vy = event.velocityY;
+          const lowestSnapOffset = snapOffsets[0] ?? 0;
 
-        // Dismiss if dragged down more than 100px or flicked down rapidly
-        if (dy > 110 || vy > 0.75) {
-          animateDismiss();
-        } else {
-          // Smooth spring back to top snap position
-          Animated.spring(translateY, {
-            toValue: 0,
-            useNativeDriver: true,
-            damping: 24,
-            stiffness: 280,
-            mass: 0.8,
-          }).start();
-        }
-      },
-      onPanResponderTerminate: () => {
-        setIsDragging(false);
-        Animated.spring(translateY, {
-          toValue: 0,
-          useNativeDriver: true,
-          damping: 24,
-          stiffness: 280,
-        }).start();
-      },
-    })
-  ).current;
+          // Dismiss if dragged well below lowest snap point or flicked downward rapidly
+          if (
+            currentY > lowestSnapOffset + 105 ||
+            (vy > 750 && currentY > lowestSnapOffset + 24)
+          ) {
+            runOnJS(triggerDismissHaptic)();
+            if (reducedMotion) {
+              runOnJS(finishClose)();
+            } else {
+              translateY.value = withTiming(
+                height,
+                {
+                  duration: 195,
+                  easing: Easing.bezier(0.25, 0.1, 0.25, 1),
+                },
+                (finished) => {
+                  if (finished) {
+                    runOnJS(finishClose)();
+                  }
+                }
+              );
+            }
+            return;
+          }
+
+          // Multi-snap point resolution (supports upward expansion & downward snap)
+          const projectedY = currentY + vy * 0.12;
+          let bestIdx = 0;
+          let bestDist = Math.abs(projectedY - (snapOffsets[0] ?? 0));
+
+          for (let i = 1; i < snapOffsets.length; i++) {
+            const dist = Math.abs(projectedY - (snapOffsets[i] ?? 0));
+            if (dist < bestDist) {
+              bestDist = dist;
+              bestIdx = i;
+            }
+          }
+
+          if (bestIdx !== activeSnapIdx.value) {
+            activeSnapIdx.value = bestIdx;
+            runOnJS(triggerSnapHaptic)();
+          }
+
+          const targetOffset = snapOffsets[bestIdx] ?? 0;
+          if (reducedMotion) {
+            translateY.value = targetOffset;
+          } else {
+            translateY.value = withSpring(targetOffset, SPRING_CONFIG);
+          }
+        })
+        .onFinalize(() => {
+          runOnJS(setIsDragging)(false);
+        }),
+    [
+      dragStartY,
+      translateY,
+      snapOffsets,
+      activeSnapIdx,
+      reducedMotion,
+      height,
+      triggerSnapHaptic,
+      triggerDismissHaptic,
+      finishClose,
+    ]
+  );
+
+  const animatedSheetStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+  }));
 
   if (!modalRendered) return null;
-
-  const maxSheetHeight = height * maxHeightRatio;
 
   return (
     <Modal
@@ -177,8 +282,8 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
       onRequestClose={animateDismiss}
       statusBarTranslucent
     >
-      <View style={styles.modalRoot}>
-        {/* Transparent Backdrop: Zero dark/gray overlay per requirement, blocks touches to page */}
+      <GestureHandlerRootView style={styles.modalRoot}>
+        {/* Transparent Backdrop: Zero dark/gray dim overlay, blocks accidental background touches */}
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={dismissOnBackdropPress ? animateDismiss : undefined}
@@ -186,102 +291,110 @@ export const AppBottomSheet: React.FC<AppBottomSheetProps> = ({
           accessibilityLabel="Dismiss sheet"
         />
 
-        {/* Sliding Bottom-Anchored Sheet */}
-        <Animated.View
-          style={[
-            styles.sheet,
-            {
-              backgroundColor: isDark ? "#121214" : palette.background,
-              borderColor: isDark ? "#27272A" : palette.border,
-              maxHeight: maxSheetHeight,
-              paddingBottom: Math.max(insets.bottom, 16),
-              transform: [{ translateY }],
-            },
-            sheetStyle,
-          ]}
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          pointerEvents="box-none"
+          style={styles.keyboardAvoidingWrap}
         >
-          {/* Solid Bottom Extension Fill: Prevents any background peeking through the bottom */}
-          <View
+          {/* Sliding Bottom-Anchored Sheet */}
+          <Animated.View
             style={[
-              styles.bottomExtensionFill,
-              { backgroundColor: isDark ? "#121214" : palette.background },
+              styles.sheet,
+              {
+                backgroundColor: isDark ? "#121214" : palette.background,
+                borderColor: isDark ? "#27272A" : palette.border,
+                maxHeight: maxSheetHeight,
+                paddingBottom: Math.max(insets.bottom, 16),
+              },
+              animatedSheetStyle,
+              sheetStyle,
             ]}
-          />
-
-          {/* Interactive Top Handle & Header Region (Draggable) */}
-          <View {...panResponder.panHandlers} style={styles.draggableHeaderZone}>
-            {showHandle ? <SheetHandle active={isDragging} /> : null}
-
-            {(title || showCloseButton || headerRight) && (
-              <View
-                style={[
-                  styles.header,
-                  { borderBottomColor: isDark ? "#27272A" : palette.border },
-                ]}
-              >
-                <View style={styles.headerTitleWrap}>
-                  {title ? (
-                    <Text
-                      style={[styles.title, { color: palette.text }]}
-                      numberOfLines={1}
-                    >
-                      {title}
-                    </Text>
-                  ) : null}
-                  {subtitle ? (
-                    <Text
-                      style={[styles.subtitle, { color: palette.subtext }]}
-                      numberOfLines={1}
-                    >
-                      {subtitle}
-                    </Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.headerRightActions}>
-                  {headerRight}
-
-                  {showCloseButton ? (
-                    <Pressable
-                      onPress={animateDismiss}
-                      style={[
-                        styles.closeBtn,
-                        {
-                          backgroundColor: isDark
-                            ? "#27272A"
-                            : palette.surfaceMuted,
-                        },
-                      ]}
-                      accessibilityRole="button"
-                      accessibilityLabel="Close sheet"
-                      hitSlop={8}
-                    >
-                      <X size={18} color={palette.text} />
-                    </Pressable>
-                  ) : null}
-                </View>
-              </View>
-            )}
-          </View>
-
-          {/* Scrollable / Flexible Sheet Content */}
-          <View style={[styles.content, contentStyle]}>{children}</View>
-
-          {/* Optional Sheet Footer (e.g., Primary Action Button) */}
-          {footer ? (
+          >
+            {/* Solid Bottom Extension Fill: Guarantees zero bottom gap during spring or upward pull */}
             <View
               style={[
-                styles.footer,
-                {
-                  borderTopColor: isDark ? "#27272A" : palette.border,
-                },
+                styles.bottomExtensionFill,
+                { backgroundColor: isDark ? "#121214" : palette.background },
               ]}
-            >
-              {footer}
-            </View>
-          ) : null}
-        </Animated.View>
-      </View>
+            />
+
+            {/* Interactive Top Handle & Header Region (Draggable Up/Down) */}
+            <GestureDetector gesture={headerPanGesture}>
+              <Animated.View style={styles.draggableHeaderZone}>
+                {showHandle ? <SheetHandle active={isDragging} /> : null}
+
+                {(title || showCloseButton || headerRight) && (
+                  <View
+                    style={[
+                      styles.header,
+                      { borderBottomColor: isDark ? "#27272A" : palette.border },
+                    ]}
+                  >
+                    <View style={styles.headerTitleWrap}>
+                      {title ? (
+                        <Text
+                          style={[styles.title, { color: palette.text }]}
+                          numberOfLines={1}
+                        >
+                          {title}
+                        </Text>
+                      ) : null}
+                      {subtitle ? (
+                        <Text
+                          style={[styles.subtitle, { color: palette.subtext }]}
+                          numberOfLines={1}
+                        >
+                          {subtitle}
+                        </Text>
+                      ) : null}
+                    </View>
+
+                    <View style={styles.headerRightActions}>
+                      {headerRight}
+
+                      {showCloseButton ? (
+                        <Pressable
+                          onPress={animateDismiss}
+                          style={[
+                            styles.closeBtn,
+                            {
+                              backgroundColor: isDark
+                                ? "#27272A"
+                                : palette.surfaceMuted,
+                            },
+                          ]}
+                          accessibilityRole="button"
+                          accessibilityLabel="Close sheet"
+                          hitSlop={8}
+                        >
+                          <X size={18} color={palette.text} />
+                        </Pressable>
+                      ) : null}
+                    </View>
+                  </View>
+                )}
+              </Animated.View>
+            </GestureDetector>
+
+            {/* Scrollable / Flexible Sheet Content */}
+            <View style={[styles.content, contentStyle]}>{children}</View>
+
+            {/* Optional Sheet Footer (e.g., Primary Action Button) */}
+            {footer ? (
+              <View
+                style={[
+                  styles.footer,
+                  {
+                    borderTopColor: isDark ? "#27272A" : palette.border,
+                  },
+                ]}
+              >
+                {footer}
+              </View>
+            ) : null}
+          </Animated.View>
+        </KeyboardAvoidingView>
+      </GestureHandlerRootView>
     </Modal>
   );
 };
@@ -292,6 +405,10 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
     backgroundColor: "transparent",
     zIndex: 999,
+  },
+  keyboardAvoidingWrap: {
+    width: "100%",
+    justifyContent: "flex-end",
   },
   sheet: {
     width: "100%",
@@ -314,10 +431,10 @@ const styles = StyleSheet.create({
   },
   bottomExtensionFill: {
     position: "absolute",
-    bottom: -400,
+    bottom: -500,
     left: 0,
     right: 0,
-    height: 400,
+    height: 500,
   },
   draggableHeaderZone: {
     width: "100%",

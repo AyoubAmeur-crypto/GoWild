@@ -339,17 +339,14 @@ export const SearchResultsScreen: React.FC = () => {
           />
         }
       >
-        <ScrollView
-          contentContainerStyle={styles.modalScroll}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.modalScroll}>
           <DateRangePicker
             checkIn={checkIn}
             checkOut={checkOut}
             onChange={setDates}
           />
           <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
-        </ScrollView>
+        </View>
       </SpringBottomSheet>
     </View>
   );

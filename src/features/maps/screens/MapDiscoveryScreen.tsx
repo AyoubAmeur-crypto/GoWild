@@ -538,6 +538,9 @@ export const MapDiscoveryScreen: React.FC = () => {
               title={activeHotel.name}
               subtitle={`${activeHotel.location.city}, ${activeHotel.location.country}`}
               onClose={() => setShowHalfModal(false)}
+              snapPoints={[0.58, 0.9]}
+              initialSnapIndex={0}
+              maxHeightRatio={0.9}
               footer={
                 <View style={styles.modalActionRow}>
                   <View style={{ flex: 1, gap: 3 }}>
@@ -637,10 +640,7 @@ export const MapDiscoveryScreen: React.FC = () => {
               />
             }
           >
-            <ScrollView
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.pickerScrollContent}
-            >
+            <View style={styles.pickerScrollContent}>
               <DateRangePicker
                 checkIn={draftCheckIn}
                 checkOut={draftCheckOut}
@@ -654,7 +654,7 @@ export const MapDiscoveryScreen: React.FC = () => {
                 occupancy={draftOccupancy}
                 onChange={setDraftOccupancy}
               />
-            </ScrollView>
+            </View>
           </SpringBottomSheet>
         </>
       )}

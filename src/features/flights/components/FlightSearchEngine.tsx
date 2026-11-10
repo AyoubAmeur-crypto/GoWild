@@ -734,12 +734,9 @@ export const FlightSearchEngine: React.FC = () => {
           />
         }
       >
-        <ScrollView
-          contentContainerStyle={{ gap: 14, paddingBottom: 10 }}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={{ gap: 14, paddingHorizontal: 20, paddingBottom: 10 }}>
           <DateRangePicker checkIn={checkIn} checkOut={checkOut} onChange={setDates} />
-        </ScrollView>
+        </View>
       </SpringBottomSheet>
     </View>
   );
@@ -945,7 +942,7 @@ const styles = StyleSheet.create({
   },
   airportModalBackdrop: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backgroundColor: "transparent",
     justifyContent: "flex-end",
   },
   airportModalSheet: {

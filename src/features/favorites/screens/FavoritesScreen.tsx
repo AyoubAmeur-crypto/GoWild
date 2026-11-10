@@ -80,7 +80,7 @@ export const FavoritesScreen: React.FC = () => {
             title="No saved hotels yet"
             description="Tap the heart icon on any hotel card or detail page to shortlist properties for your next trip."
             actionLabel="Discover Hotels"
-            onAction={() => router.push("/(tabs)")}
+            onAction={() => router.navigate("/(tabs)")}
           />
         ) : isLoading && savedHotels.length === 0 ? (
           <View style={styles.list}>

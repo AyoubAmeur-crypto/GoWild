@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet } from "react-native";
+import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { Minus, Plus } from "lucide-react-native";
 import type { Occupancy } from "../../../types/domain";
 import { useAppTheme } from "../../../theme/useAppTheme";
@@ -155,11 +155,14 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
       )}
 
       {occupancy.childrenAges.length > 0 ? (
-        <View
+        <ScrollView
           style={[
             styles.agesBox,
             { backgroundColor: palette.surfaceMuted },
           ]}
+          contentContainerStyle={{ gap: 8 }}
+          nestedScrollEnabled
+          showsVerticalScrollIndicator={false}
         >
           <Text style={[styles.agesTitle, { color: palette.subtext }]}>
             Child ages (required for accurate hotel rate calculation)
@@ -202,7 +205,7 @@ export const GuestCounter: React.FC<GuestCounterProps> = ({
               </View>
             </View>
           ))}
-        </View>
+        </ScrollView>
       ) : null}
     </View>
   );
@@ -212,8 +215,9 @@ const styles = StyleSheet.create({
   container: {
     borderRadius: 18,
     borderWidth: 1,
-    padding: 16,
-    gap: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    gap: 10,
   },
   row: {
     flexDirection: "row",
@@ -221,32 +225,32 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   labelCol: {
-    gap: 2,
+    gap: 1,
   },
   rowTitle: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
   },
   rowSubtitle: {
-    fontSize: 12,
+    fontSize: 11,
   },
   stepper: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 10,
   },
   stepBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     borderWidth: 1,
     alignItems: "center",
     justifyContent: "center",
   },
   stepVal: {
-    minWidth: 22,
+    minWidth: 20,
     textAlign: "center",
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: "700",
   },
   divider: {
@@ -254,9 +258,9 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   agesBox: {
-    padding: 12,
+    padding: 10,
     borderRadius: 12,
-    gap: 10,
+    maxHeight: 84,
   },
   agesTitle: {
     fontSize: 11,

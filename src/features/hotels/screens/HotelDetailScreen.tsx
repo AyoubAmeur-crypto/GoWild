@@ -586,17 +586,14 @@ export const HotelDetailScreen: React.FC<HotelDetailScreenProps> = ({
           />
         }
       >
-        <ScrollView
-          contentContainerStyle={styles.modalScroll}
-          showsVerticalScrollIndicator={false}
-        >
+        <View style={styles.modalScroll}>
           <DateRangePicker
             checkIn={checkIn}
             checkOut={checkOut}
             onChange={setDates}
           />
           <GuestCounter occupancy={occupancy} onChange={setOccupancy} />
-        </ScrollView>
+        </View>
       </SpringBottomSheet>
     </View>
   );
